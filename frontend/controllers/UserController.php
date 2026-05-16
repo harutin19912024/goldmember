@@ -13,6 +13,7 @@ use frontend\models\EditPassword;
 use Yii;
 use frontend\models\Order;
 use frontend\models\OrderSearch;
+use frontend\models\ProductOrder;
 use yii\filters\VerbFilter;
 use frontend\models\Customer;
 use yii\helpers\ArrayHelper;
@@ -76,47 +77,31 @@ class UserController extends \yii\web\Controller
             $view_file_path = 'repairer/profile';
         }
 
-		$user_id = Yii::$app->user->identity->id; 
-		$favorites = \frontend\models\Product::getFavoritesByUser($user_id);
-//         $customerAdressObj = CustomerAddress::findOne(['customer_id' => $userModel->id, 'default_address' => 1]);
-// 		if ($customerAdressObj) {
-//             $modelAdd = $customerAdressObj;
-//             $addresForm = $this->renderPartial('customer/update', array(
-//                 'model' => $modelAdd
-//             ));
-//         } else {
-//             $modelAdd = new CustomerAddress();
-//             $countries = Countries::find()->select(['id', 'name'])->where(['status' => 1])->asArray()->all();
-//             $countries = ArrayHelper::map($countries, 'name', 'name');
-//             $addresForm = $this->renderPartial('customer/create', array(
-//                 'model' => $modelAdd,
-//                 'countries' => $countries,
-//             ));
+        $user_id = Yii::$app->user->identity->id;
 
-//         }
+        // Real favorites (product models)
+        $favorites = \frontend\models\Product::getFavoritesByUser($user_id);
 
-        if (Yii::$app->request->post()) {
-            $postArr = Yii::$app->request->post();
-            $postArr['CustomerAddress']['customer_id'] = $userModel->id;
-            $postArr['CustomerAddress']['default_address'] = 1;
-            if ($modelAdd->load($postArr) && $modelAdd->save()) {
-                return $this->redirect(['user/profile']);
-            } else {
-                return $this->render($view_file_path, [
-                    'UserModel' => $userModel,
-                    //'addressForm' => $addresForm,
-					'favorites' => $favorites
-                ]);
+        // Favorited product ID list for heart-icon state
+        $favoritedIds = Favorites::find()
+            ->select('product_id')
+            ->where(['user_id' => $user_id])
+            ->column();
 
-            }
+        // Real orders from product_orders table
+        $orders = ProductOrder::find()
+            ->with('product')
+            ->where(['user_id' => $user_id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->all();
 
-        }
-		$languege = Language::find()->where(['short_code' => Yii::$app->language])->asArray()->all();
+        $languege = Language::find()->where(['short_code' => Yii::$app->language])->asArray()->all();
         return $this->render($view_file_path, [
-            'UserModel' => $userModel,
-			'isDefaultLanguage' => $languege[0]['is_default'],
-            //'addressForm' => $addresForm,
-            'favorites' => $favorites
+            'UserModel'       => $userModel,
+            'isDefaultLanguage' => $languege[0]['is_default'],
+            'favorites'       => $favorites,
+            'favoritedIds'    => $favoritedIds,
+            'orders'          => $orders,
         ]);
     }
 

@@ -1,48 +1,54 @@
 <?php
+
 use yii\helpers\Html;
-/* @var $this yii\web\View */
+use frontend\models\ProductOrder;
+
+/* @var $orders ProductOrder[] */
+
 ?>
 
-<div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" style="font-size:0.92rem;">
-        <thead>
-            <tr style="border-bottom:2px solid rgba(19,178,173,0.2);">
-                <th class="text-muted fw-semibold" style="font-size:0.75rem; letter-spacing:1px; text-transform:uppercase; padding-bottom:12px;">#</th>
-                <th class="text-muted fw-semibold" style="font-size:0.75rem; letter-spacing:1px; text-transform:uppercase;"><?= Yii::t('app', 'Order') ?></th>
-                <th class="text-muted fw-semibold" style="font-size:0.75rem; letter-spacing:1px; text-transform:uppercase;"><?= Yii::t('app', 'Date') ?></th>
-                <th class="text-muted fw-semibold" style="font-size:0.75rem; letter-spacing:1px; text-transform:uppercase;"><?= Yii::t('app', 'Price') ?></th>
-                <th class="text-muted fw-semibold" style="font-size:0.75rem; letter-spacing:1px; text-transform:uppercase;"><?= Yii::t('app', 'Status') ?></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="text-muted small">1</td>
-                <td><a href="#" style="color:#13B2AD; font-weight:500;">#45006</a></td>
-                <td class="text-muted">Sunday 18th March, 2015</td>
-                <td class="fw-medium">275 AMD</td>
-                <td><span class="badge px-3 py-1" style="background:#d1f5e0;color:#1a7a3a;font-size:0.75rem;border-radius:20px;"><?= Yii::t('app', 'Delivered') ?></span></td>
-            </tr>
-            <tr>
-                <td class="text-muted small">2</td>
-                <td><a href="#" style="color:#13B2AD; font-weight:500;">#46440</a></td>
-                <td class="text-muted">Monday 14th April, 2015</td>
-                <td class="fw-medium">575 AMD</td>
-                <td><span class="badge px-3 py-1" style="background:#fde8e8;color:#a01414;font-size:0.75rem;border-radius:20px;"><?= Yii::t('app', 'Cancelled') ?></span></td>
-            </tr>
-            <tr>
-                <td class="text-muted small">3</td>
-                <td><a href="#" style="color:#13B2AD; font-weight:500;">#48700</a></td>
-                <td class="text-muted">Friday 28th April, 2015</td>
-                <td class="fw-medium">205 AMD</td>
-                <td><span class="badge px-3 py-1" style="background:#d1f5e0;color:#1a7a3a;font-size:0.75rem;border-radius:20px;"><?= Yii::t('app', 'Delivered') ?></span></td>
-            </tr>
-            <tr>
-                <td class="text-muted small">4</td>
-                <td><a href="#" style="color:#13B2AD; font-weight:500;">#51280</a></td>
-                <td class="text-muted">Sunday 26th June, 2015</td>
-                <td class="fw-medium">455 AMD</td>
-                <td><span class="badge px-3 py-1" style="background:#d1f5e0;color:#1a7a3a;font-size:0.75rem;border-radius:20px;"><?= Yii::t('app', 'Delivered') ?></span></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+<?php if (empty($orders)): ?>
+    <div class="text-center py-5">
+        <i class="bi bi-bag" style="font-size:3rem;color:#13B2AD;opacity:.4;"></i>
+        <p class="text-muted mt-3 mb-1"><?= Yii::t('app', 'No orders yet.') ?></p>
+        <p class="text-muted small"><?= Yii::t('app', 'Your purchase history will appear here once you place an order.') ?></p>
+        <a href="/<?= Yii::$app->language ?>/search" class="btn btn-sm mt-2"
+           style="background:#13B2AD;color:#fff;border-radius:20px;padding:6px 20px;">
+            <?= Yii::t('app', 'Browse Products') ?>
+        </a>
+    </div>
+<?php else: ?>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.92rem;">
+            <thead>
+                <tr style="border-bottom:2px solid rgba(19,178,173,0.2);">
+                    <th class="text-muted fw-semibold" style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;padding-bottom:12px;">#</th>
+                    <th class="text-muted fw-semibold" style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;"><?= Yii::t('app', 'Product') ?></th>
+                    <th class="text-muted fw-semibold" style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;"><?= Yii::t('app', 'Date') ?></th>
+                    <th class="text-muted fw-semibold" style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;"><?= Yii::t('app', 'Price') ?></th>
+                    <th class="text-muted fw-semibold" style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;"><?= Yii::t('app', 'Qty') ?></th>
+                    <th class="text-muted fw-semibold" style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;"><?= Yii::t('app', 'Status') ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($orders as $i => $order): ?>
+                    <tr>
+                        <td class="text-muted small"><?= $i + 1 ?></td>
+                        <td class="fw-medium">
+                            <?= Html::encode($order->product->title ?? '—') ?>
+                        </td>
+                        <td class="text-muted"><?= date('d M Y', strtotime($order->created_at)) ?></td>
+                        <td class="fw-medium"><?= number_format($order->price_amd, 0, '.', ',') ?> AMD</td>
+                        <td class="text-muted"><?= $order->quantity ?></td>
+                        <td>
+                            <span class="badge px-3 py-1"
+                                  style="<?= ProductOrder::getStatusBadgeStyle($order->status) ?>border-radius:20px;font-size:0.75rem;">
+                                <?= Yii::t('app', ProductOrder::getStatusLabel($order->status)) ?>
+                            </span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+<?php endif; ?>

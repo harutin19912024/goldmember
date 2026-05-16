@@ -30,6 +30,7 @@ use backend\models\NewsCategory;
 use backend\models\MetalPrices;
 use backend\models\ExchangeRates;
 use common\models\MetalPriceReal;
+use common\models\Favorites;
 
 /**
  * Site controller
@@ -185,9 +186,18 @@ class SiteController extends Controller
 
         $auctions = $query->offset($pages->offset)->limit($pages->limit)->all();
 
+        $favoritedIds = [];
+        if (!Yii::$app->user->isGuest) {
+            $favoritedIds = Favorites::find()
+                ->select('product_id')
+                ->where(['user_id' => Yii::$app->user->id])
+                ->column();
+        }
+
         return $this->render('auction', [
-            'auctions' => $auctions,
-            'pages'    => $pages,
+            'auctions'     => $auctions,
+            'pages'        => $pages,
+            'favoritedIds' => $favoritedIds,
         ]);
     }
     

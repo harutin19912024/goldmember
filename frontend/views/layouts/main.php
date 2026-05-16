@@ -46,6 +46,23 @@ $session = Yii::$app->session;
 $newses = News::find()->where(['running_line' => 1])->limit(15)->all();
 AppAsset::register($this);
 
+// Compute real favorites count for logged-in users
+$favCount = 0;
+if (!Yii::$app->user->isGuest) {
+    $favCount = (int) \common\models\Favorites::find()
+        ->where(['user_id' => Yii::$app->user->id])
+        ->count();
+}
+
+// Inject globals for favorites.js
+$this->registerJs(
+    'window.GM_CSRF = ' . json_encode(Yii::$app->request->getCsrfToken()) . ';' .
+    'window.GM_LOGGED_IN = ' . (Yii::$app->user->isGuest ? 'false' : 'true') . ';' .
+    'window.GM_LANG = ' . json_encode(Yii::$app->language) . ';',
+    \yii\web\View::POS_HEAD
+);
+$this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END, 'depends' => \frontend\assets\AppAsset::class]);
+
 ?>
 <?php $this->beginPage() ?>
 
@@ -312,11 +329,12 @@ AppAsset::register($this);
             </div>
             <ul class="d-flex col-4 gap-2 justify-content-end px-0 mb-0">
                 <li class="mr-2">
-                    <a href="/<?=Yii::$app->language?>" class="user-link bg-white-color d-flex">
+                    <a href="/<?= Yii::$app->language ?>/user/profile#favorites-pane"
+                       class="user-link bg-white-color d-flex"
+                       title="<?= Yii::t('app', 'My Favourites') ?>">
                         <i class="bi bi-heart"></i>
-                        <span class="count bg-primary-color white-color">
-                            <?php if(!Yii::$app->user->isGuest && Yii::$app->user->identity->favoritesCount):?><?=Yii::$app->user->identity->favoritesCount?>
-                            <?php else:?>0<?php endif;?>
+                        <span class="count bg-primary-color white-color fav-count">
+                            <?= $favCount ?>
                         </span>
                     </a>
                 </li>

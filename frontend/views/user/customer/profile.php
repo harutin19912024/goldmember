@@ -6,6 +6,8 @@ use yii\helpers\Url;
 /* @var $this yii\web\View */
 /* @var $UserModel frontend\models\Customer */
 /* @var $favorites array */
+/* @var $favoritedIds int[] */
+/* @var $orders frontend\models\ProductOrder[] */
 
 $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'My Profile');
 
@@ -209,12 +211,12 @@ $initials = strtoupper(
 
                         <!-- Orders pane -->
                         <div class="tab-pane fade show active p-4" id="orders-pane" role="tabpanel">
-                            <?= $this->render('history') ?>
+                            <?= $this->render('history', ['orders' => $orders ?? []]) ?>
                         </div>
 
                         <!-- Favourites pane -->
                         <div class="tab-pane fade p-4" id="favorites-pane" role="tabpanel">
-                            <?= $this->render('favorites', ['products' => $favorites]) ?>
+                            <?= $this->render('favorites', ['products' => $favorites, 'favoritedIds' => $favoritedIds ?? []]) ?>
                         </div>
 
                     </div>
