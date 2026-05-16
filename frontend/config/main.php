@@ -107,8 +107,8 @@ return [
             'enableStrictParsing' => false,
             'class' => 'codemix\localeurls\UrlManager',
             'languages' => ['am', 'en'],
-            'enableDefaultLanguageUrlCode' => false,
-            'enableLanguagePersistence' => false,
+            'enableDefaultLanguageUrlCode' => true,
+            'enableLanguagePersistence' => true,
             'rules' => $Rules,
         ]
     ],

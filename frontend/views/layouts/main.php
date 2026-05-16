@@ -44,15 +44,11 @@ $currentUrl = trim($_SERVER['REQUEST_URI']);
 $currentPath = preg_replace('#^/(en|am)(/|$)#', '/', $currentUrl);  // strip any /en/ or /am/
 $currentPath = '/' . ltrim($currentPath, '/');
 
+// Both languages now have explicit URL prefix (enableDefaultLanguageUrlCode = true)
 $langSwitchUrls = [];
 foreach ($languages as $_lang) {
     $code = $_lang['short_code'];
-    if ($code === 'am') {
-        // AM is the default — no prefix needed
-        $langSwitchUrls[$code] = $currentPath ?: '/';
-    } else {
-        $langSwitchUrls[$code] = '/' . $code . $currentPath;
-    }
+    $langSwitchUrls[$code] = '/' . $code . ($currentPath === '/' ? '' : $currentPath);
 }
 //echo "<pre>"; print_r($currentUrl);die;
 $com = strcmp($currentUrl, "/site/index");
