@@ -1,0 +1,94 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(grep *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(wc *)",
+      "Bash(which *)",
+      "Bash(file *)",
+      "Bash(stat *)",
+      "Bash(echo *)",
+      "Bash(printf *)",
+      "Bash(touch *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(chmod *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(cut *)",
+      "Bash(tr *)",
+      "Bash(diff *)",
+      "Bash(jq *)",
+      "Bash(docker compose *)",
+      "Bash(docker ps *)",
+      "Bash(docker logs *)",
+      "Bash(docker exec *)",
+      "Bash(mysql *)",
+      "Bash(mysqldump *)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git reset *)",
+      "Bash(git rm *)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git show *)",
+      "Bash(git stash *)",
+      "Bash(git fetch *)",
+      "Bash(python3 *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)",
+      "Bash(playwright *)",
+      "Bash(npx playwright *)",
+      "Bash(playwright install *)",
+      "Bash(node *)",
+      "Bash(npm *)",
+      "Bash(php -l *)",
+      "Bash(php -r *)",
+      "Bash(php -f *)",
+      "Bash(php yii *)",
+      "Read(/var/www/html/sap/**)",
+      "Read(/var/www/html/hierarchical/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f; echo \"$f\" | grep -q '\\.php$' && php -l \"$f\" 2>&1 || true; }",
+            "timeout": 10,
+            "statusMessage": "Checking PHP syntax..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | { read -r cmd; echo \"$cmd\" | grep -qE '^git commit' && git -C /var/www/html/goldmember log --oneline -5 2>/dev/null || true; }",
+            "timeout": 10,
+            "statusMessage": "Showing recent commits..."
+          }
+        ]
+      }
+    ]
+  }
+}
