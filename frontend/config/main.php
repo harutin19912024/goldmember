@@ -46,6 +46,7 @@ array_push($Rules, ['pattern' => '/power-of-pany', 'route' => 'site/donate']);
 array_push($Rules, ['pattern' => '/power-of-pany', 'route' => 'site/power-of-pany']);
 array_push($Rules, ['pattern' => '/auction', 'route' => 'site/auction']);
 array_push($Rules, ['pattern' => '/best-offer', 'route' => 'site/best-offer']);
+array_push($Rules, ['pattern' => 'best-offer/<id:\d+>', 'route' => 'site/best-offer-detail']);
 
 //$Rules = $Rules.['POST <tag>' => 'product/index'];
 //echo "<pre>"; print_r($Rules);die;

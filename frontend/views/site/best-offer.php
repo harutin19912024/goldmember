@@ -108,7 +108,7 @@ $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'Best Offer')
             ?>
             <li class="col-lg-4 col-sm-12 col-md-6 product-item">
                 <div class="w-100 shadow h-100">
-                    <a href="/product/<?= $uid ?>" aria-label="Visit detail" class="position-relative product-link">
+                    <a href="/<?= Yii::$app->language ?>/best-offer/<?= $uid ?>" aria-label="Visit detail" class="position-relative product-link">
                         <div class="position-relative product-img img-box">
                             <img src="<?= Html::encode($imagePath) ?>" alt="" class="img-fluid"
                                  onmouseover="zoomIn(<?= $uid ?>)"
@@ -143,7 +143,7 @@ $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'Best Offer')
                             </div>
                             <div class="deadline-more-box">
                                 <div class="deadline-box"></div>
-                                <a href="/product/<?= $uid ?>" class="button secondary-button view-more-button">
+                                <a href="/<?= Yii::$app->language ?>/best-offer/<?= $uid ?>" class="button secondary-button view-more-button">
                                     <?= Yii::t('app', 'More') ?><i class="bi bi-eye ms-1"></i>
                                 </a>
                                 <?php if ($product['price']): ?>

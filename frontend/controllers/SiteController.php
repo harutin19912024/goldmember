@@ -231,7 +231,31 @@ class SiteController extends Controller
             'favoritedIds' => $favoritedIds,
         ]);
     }
-    
+
+    public function actionBestOfferDetail($id)
+    {
+        $product = \backend\models\Product::find()
+            ->with(['material', 'category', 'productImages'])
+            ->where(['id' => (int)$id, 'best_offer' => 1, 'status' => 1])
+            ->one();
+
+        if (!$product) {
+            throw new \yii\web\NotFoundHttpException('Product not found.');
+        }
+
+        $isFaved = false;
+        if (!Yii::$app->user->isGuest) {
+            $isFaved = (bool) Favorites::find()
+                ->where(['user_id' => Yii::$app->user->id, 'product_id' => $product->id])
+                ->exists();
+        }
+
+        return $this->render('best-offer-detail', [
+            'product' => $product,
+            'isFaved' => $isFaved,
+        ]);
+    }
+
     public function actionMoreDetails()
     {
         // Latest local gold prices (most recent batch, not today-only)
