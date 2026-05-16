@@ -99,8 +99,11 @@ if ($warning) {
             </p>
 
             <?php $form = ActiveForm::begin([
-                'action'  => '/' . Yii::$app->language . '/site/login',
-                'options' => ['class' => 'w-100'],
+                'action'         => '/' . Yii::$app->language . '/site/login',
+                'options'        => ['class' => 'w-100'],
+                'validateOnBlur' => false,
+                'validateOnChange' => false,
+                'validateOnType' => false,
             ]) ?>
 
                 <!-- Username -->

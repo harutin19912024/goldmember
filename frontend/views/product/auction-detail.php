@@ -12,7 +12,9 @@ if ($product->image) {
     $imagePath = Yii::$app->params['adminUrl'] . 'uploads/images/' . $product->image->name;
 }
 
-$lotNumber = \backend\models\Auction::generateAuctionLotNumber($auction->id);
+$lotNumber = !empty($auction->lot_number)
+    ? $auction->lot_number
+    : \backend\models\Auction::generateAuctionLotNumber($auction->id);
 $channel   = 'auction-' . $auction->id;
 $agoraAppId = Yii::$app->params['agoraAppId'];
 
@@ -106,7 +108,7 @@ $statusLabel = [
 
                     <?php if ($product->short_description): ?>
                         <hr>
-                        <p class="small text-muted mb-0"><?= Html::encode($product->short_description) ?></p>
+                        <p class="small text-muted mb-0"><?= Html::encode(strip_tags($product->short_description)) ?></p>
                     <?php endif ?>
                 </div>
             </div>

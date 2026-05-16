@@ -16,24 +16,18 @@ class LoginForm extends \common\models\LoginForm
     public function rules()
     {
         return [
-            // username and password are both required
-            [['email', 'password'], 'required'],
-            // rememberMe must be a boolean value
+            [['username', 'password'], 'required'],
             ['rememberMe', 'boolean'],
-            // password is validated by validatePassword()
             ['password', 'validatePassword'],
         ];
     }
 
-    /**
-     * Finds user by [[username]]
-     *
-     * @return User|null
-     */
     protected function getUser()
     {
         if ($this->_user === null) {
-            $this->_user = \common\models\User::findByEmail($this->username);
+            // Try by email first (customer-based login), then fall back to username
+            $this->_user = \common\models\User::findByEmail($this->username)
+                        ?: \common\models\User::findByUsername($this->username);
         }
 
         return $this->_user;

@@ -15,7 +15,10 @@ use common\models\MessageSystem;
 use yii\widgets\ActiveForm;
 use kartik\select2\Select2;
 
-$messageCount = MessageSystem::find()->where(['status' => 1, 'recipient_user_id' => Yii::$app->user->identity->id])->count();
+$userId = Yii::$app->user->identity->id ?? null;
+$messageCount = $userId
+    ? MessageSystem::find()->where(['status' => 1, 'recipient_user_id' => $userId])->count()
+    : 0;
 
 $languages = Language::find()->asArray()->all();
 $currentUrl = trim(substr($_SERVER['REQUEST_URI'], 3));
@@ -124,15 +127,16 @@ $action = '/message-system/create';
             </li -->
             <li class="dropdown">
                 <a href="javascript:void(0);" class="dropdown-toggle fw600 p15" data-toggle="dropdown">
-                    <?php echo Yii::$app->user->identity->username ?>
+                    <?php echo Yii::$app->user->identity->username ?? 'Guest' ?>
                     <span class="caret caret-tp hidden-xs"></span>
                 </a>
                 <ul class="dropdown-menu list-group dropdown-persist w250" role="menu">
                     <li class="dropdown-footer">
                         <?php
+                        $identityName = Yii::$app->user->identity->username ?? 'User';
                         echo Html::beginForm(['/site/logout'], 'post')
                             . Html::submitButton(
-                                '<span class="fa fa-power-off pr5"></span>Logout (' . Yii::$app->user->identity->username . ')', ['class' => 'btn btn-link']
+                                '<span class="fa fa-power-off pr5"></span>Logout (' . $identityName . ')', ['class' => 'btn btn-link']
                             )
                             . Html::endForm()
                         ?>

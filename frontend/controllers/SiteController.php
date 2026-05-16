@@ -27,6 +27,9 @@ use backend\models\Aboutus;
 use backend\models\Sitesettings;
 use backend\models\News;
 use backend\models\NewsCategory;
+use backend\models\MetalPrices;
+use backend\models\ExchangeRates;
+use common\models\MetalPriceReal;
 
 /**
  * Site controller
@@ -210,9 +213,72 @@ class SiteController extends Controller
         ]);
     }
     
-    public function actionMoreDetails() 
+    public function actionMoreDetails()
     {
-        return $this->render('moreDetails');
+        // Latest local gold prices (most recent batch, not today-only)
+        $latestDate = MetalPrices::find()
+            ->select('DATE(created_at) as d')
+            ->andWhere(['metal_id' => 1])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->scalar();
+
+        $localGoldPrices = $latestDate
+            ? MetalPrices::find()
+                ->where(['metal_id' => 1])
+                ->andWhere(['like', 'created_at', $latestDate])
+                ->with(['metal', 'currency'])
+                ->orderBy(['karat' => SORT_DESC])
+                ->all()
+            : [];
+
+        // Global prices computed from the latest API snapshot
+        $metalPriceApiData = MetalPriceReal::find()
+            ->orderBy(['created_date' => SORT_DESC])
+            ->one();
+
+        $globalPrices = [];
+        $spotPrice = null;
+        if ($metalPriceApiData && empty($metalPriceApiData->request_error)) {
+            $raw  = $metalPriceApiData->request_data;
+            $data = is_array($raw) ? $raw : json_decode($raw, true);
+            $buyPerGram  = round($data['bid'] / 31.1035, 4);
+            $sellPerGram = round($data['ask'] / 31.1035, 4);
+
+            $karats = [
+                '999' => 0.999, '995' => 0.995, '958' => 0.958, '916' => 0.916,
+                '900 - 21.6K' => 0.900, '875' => 0.875, '750' => 0.750,
+                '585' => 0.585, '500 - 12K' => 0.500, '416 - 10K' => 0.416,
+                '375 - 9K' => 0.375, '333' => 0.333,
+            ];
+            foreach ($karats as $label => $ratio) {
+                $globalPrices[$label] = [
+                    'buy'  => round($buyPerGram  * $ratio, 2),
+                    'sell' => round($sellPerGram * $ratio, 2),
+                ];
+            }
+
+            $spotPrice = [
+                'metal'       => 'Gold',
+                'price'       => round($data['price'] / 31.1035, 4),
+                'change'      => $data['ch'] ?? null,
+                'change_pct'  => $data['chp'] ?? null,
+                'date'        => $metalPriceApiData->created_date,
+                'price_gram_24k' => $data['price_gram_24k'] ?? null,
+            ];
+        }
+
+        // Exchange rates from admin (most recent per currency)
+        $exchangeRates = ExchangeRates::find()
+            ->with('currency')
+            ->orderBy(['updated_at' => SORT_DESC])
+            ->all();
+
+        return $this->render('moreDetails', [
+            'localGoldPrices' => $localGoldPrices,
+            'globalPrices'    => $globalPrices,
+            'spotPrice'       => $spotPrice,
+            'exchangeRates'   => $exchangeRates,
+        ]);
     }
 
     public function actionBrands()
@@ -467,15 +533,35 @@ class SiteController extends Controller
         return $this->render('about-us', ['page' => $page]);
     }
 
+    public function actionNewsList()
+    {
+        $news = News::find()
+            ->where(['status' => 1])
+            ->orderBy(['created_date' => SORT_DESC])
+            ->all();
+        $categories = NewsCategory::find()->all();
+        return $this->render('news-list', [
+            'news'       => $news,
+            'categories' => $categories,
+        ]);
+    }
+
     public function actionNews($id)
     {
-        return $this->render('news', ['id' => $id]);
+        $news = News::findOne(['id' => $id, 'status' => 1]);
+        if (!$news) {
+            throw new \yii\web\NotFoundHttpException('News not found.');
+        }
+        return $this->render('news', ['news' => $news]);
     }
-    
+
     public function actionNewsByCategory($category)
     {
         $category = NewsCategory::find()->where(['route_name' => $category])->one();
-        $news = News::find()->where(['category_id' => $category->id])->all();
+        if (!$category) {
+            throw new \yii\web\NotFoundHttpException('Category not found.');
+        }
+        $news = News::find()->where(['status' => 1, 'category_id' => $category->id])->orderBy(['created_date' => SORT_DESC])->all();
         return $this->render('news-by-category', ['news' => $news, 'category' => $category]);
     }
 
