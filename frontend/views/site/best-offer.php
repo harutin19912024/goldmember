@@ -7,6 +7,7 @@ use backend\models\Slider;
 /* @var $this yii\web\View */
 /* @var $products array */
 /* @var $pages yii\data\Pagination */
+/* @var $favoritedIds int[] */
 
 $sliders = Slider::find()->where(['status' => 1])->all();
 
@@ -102,7 +103,8 @@ $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'Best Offer')
         <?php foreach ($products as $product): ?>
             <?php
             $imagePath = Yii::$app->params['adminUrl'] . 'uploads/images/' . $product['image'];
-            $uid = (int) $product['id'];
+            $uid      = (int) $product['id'];
+            $isFaved  = in_array($uid, $favoritedIds ?? []);
             ?>
             <li class="col-lg-4 col-sm-12 col-md-6 product-item">
                 <div class="w-100 shadow h-100">
@@ -112,9 +114,12 @@ $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'Best Offer')
                                  onmouseover="zoomIn(<?= $uid ?>)"
                                  onmouseout="zoomOut(<?= $uid ?>)"
                                  id="zoomImage_<?= $uid ?>">
-                            <button type="button" aria-label="Toggle Favorite"
-                                class="bg-white-color button icon-button position-absolute zindex-offcanvas-backdrop">
-                                <i class="bi bi-heart"></i>
+                            <button type="button"
+                                    data-fav-id="<?= $uid ?>"
+                                    aria-label="Toggle Favourite"
+                                    title="<?= $isFaved ? Yii::t('app','Remove from favourites') : Yii::t('app','Add to favourites') ?>"
+                                    class="bg-white-color button icon-button position-absolute zindex-offcanvas-backdrop<?= $isFaved ? ' faved' : '' ?>">
+                                <i class="bi <?= $isFaved ? 'bi-heart-fill' : 'bi-heart' ?>"></i>
                             </button>
                         </div>
                         <div class="content">

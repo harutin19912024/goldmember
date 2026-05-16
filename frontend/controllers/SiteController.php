@@ -217,9 +217,18 @@ class SiteController extends Controller
             'offset'     => $pages->offset,
         ]);
 
+        $favoritedIds = [];
+        if (!Yii::$app->user->isGuest) {
+            $favoritedIds = Favorites::find()
+                ->select('product_id')
+                ->where(['user_id' => Yii::$app->user->id])
+                ->column();
+        }
+
         return $this->render('best-offer', [
-            'products' => $products,
-            'pages'    => $pages,
+            'products'     => $products,
+            'pages'        => $pages,
+            'favoritedIds' => $favoritedIds,
         ]);
     }
     
