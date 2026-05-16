@@ -371,8 +371,8 @@ AppAsset::register($this);
                             <?= Yii::t('app', 'About Us'); ?>
                         </a>
                     </li>
-                    <li class="nav-item<?php if ($currentUrl == ''): ?> active <?php endif ?>">
-                        <a class="nav-item-link gray-color">
+                    <li class="nav-item<?php if (strpos($currentUrl, 'news') === 0): ?> active <?php endif ?>">
+                        <a href="/<?= Yii::$app->language ?>/news" class="nav-item-link gray-color">
                             <?= Yii::t('app', 'News'); ?>
                         </a>
                     </li>
