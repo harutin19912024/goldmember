@@ -1,0 +1,43 @@
+.cards-section {
+    font-family: 'Inter', sans-serif;
+
+    .card-content {
+        padding: 49px 20px;
+        border-radius: 4px;
+        position: relative;
+        z-index: 2;
+         
+        &:hover {
+            opacity: 1;
+            background-color: var(--primary-alternate-color);
+        }
+
+        @media screen and (max-width: 1024px) {
+            padding-top: 25px;
+            padding-bottom: 25px;
+        }
+    }
+
+    .card-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 40px;
+        margin-right: 23px;
+        color: var(--white-color);
+    }
+
+    .card-title {
+        font-size: 18px;
+        line-height: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: left;
+        margin-bottom: 5px;
+    }
+
+    .card-description {
+        font-size: 15px;
+        line-height: 18px;
+        font-weight: 400;
+    }
+}

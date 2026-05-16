@@ -1,0 +1,131 @@
+.footer {
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 400;
+
+    @media screen and (max-width: 1024px) {
+        font-size: 14px;
+    }
+
+    .info-text {
+        color: var(--gray-color);
+        font-family: 'Inter', sans-serif;
+        max-width: 570px;
+        margin-top: 26px;
+
+        @media screen and (max-width: 1024px) {
+            margin-top: 15px;
+        }
+    }
+
+    .social-buttons {
+        padding-top: 52px;
+
+        @media screen and (max-width: 1024px) {
+            padding-top: 20px;
+            padding-bottom: 30px;
+        }
+
+        .social-button {
+            margin-right: 13px;
+
+            .social {
+                width: 30px;
+                height: 30px;
+                background-color: var(--black-color);
+                color: var(--white-color);
+                border-radius: 50%;
+                display: flex;
+                align-content: center;
+                justify-content: center;
+                align-items: center;
+
+                &:hover {
+                    background-color: var(--primary-color);
+                }
+            }
+        }
+    }
+
+    .footer-rows {
+        display: flex;
+
+
+        @media screen and (max-width: 1024px) {
+            display: block;
+        }
+
+        .footer-col {
+            @media screen and (max-width: 1024px) {
+                padding-top: 20px;
+            }
+
+            &.col-one {
+                flex: 1;
+                padding-top: 6px;
+            }
+
+            &.col-two {
+                flex: 0 0 15%;
+            }
+
+            &.col-three {
+
+                flex: 0 0 18%;
+            }
+
+            &.col-four {
+                flex: 0 0 156px;
+            }
+        }
+    }
+
+    .title {
+        font-family: 'Inter', sans-serif;
+        color: var(--gray-color-lighter);
+        margin-bottom: 18px;
+
+        @media screen and (max-width: 1024px) {
+            margin-bottom: 12px;
+        }
+    }
+
+    .contact-line {
+        color: var(--black-color);
+        margin-bottom: 12px;
+
+        @media screen and (max-width: 1024px) {
+            margin-bottom: 6px;
+        }
+
+        a {
+            font-family: 'Inter', sans-serif;
+        }
+    }
+
+    .links {
+        li {
+            margin-bottom: 10px;
+        }
+
+        .link {
+            border-bottom: solid 1px transparent;
+            color: var(--black-color);
+
+            &:hover {
+                border-bottom: solid 1px var(--primary-color);
+                color: var(--primary-color);
+            }
+        }
+    }
+
+    .copy {
+        padding: 22px 20px;
+        margin-top: 38px;
+
+        @media screen and (max-width: 1024px) {
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
+    }
+}

@@ -1,0 +1,77 @@
+div.box{
+    width: 100%;
+}
+div.box .inputfile {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+
+.inputfile + label {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    display: inline-block;
+    overflow: hidden;
+    padding: 0.625rem 1.25rem;
+    width: 100%;
+}
+.inputfile-6 + label {
+    color: #555555;
+}
+
+.inputfile-6 + label {
+    border: 1px solid #dddddd;
+    background-color: #ffffff;
+    padding: 0;
+}
+
+/*.inputfile-6:focus + label,*/
+/*.inputfile-6.has-focus + label,*/
+/*.inputfile-6 + label:hover {*/
+    /*border-color: #722040;*/
+/*}*/
+
+.inputfile-6 + label span,
+.inputfile-6 + label strong {
+    padding: 0.857rem 1.45rem;
+    /* 10px 20px */
+}
+
+.inputfile-6 + label span {
+    width: auto;
+    min-height: 2em;
+    display: inline-block;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    vertical-align: top;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.inputfile-6 + label strong {
+    height: 100%;
+    color: #f1e5e6;
+    background-color: #5d9cec;
+    display: inline-block;
+    float: right;
+}
+
+.inputfile-6:focus + label strong,
+.inputfile-6.has-focus + label strong,
+.inputfile-6 + label:hover strong {
+    background-color: #5d9aca;
+}
+
+@media screen and (max-width: 50em) {
+    .inputfile-6 + label strong {
+        display: block;
+    }
+}

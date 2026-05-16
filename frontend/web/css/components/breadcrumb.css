@@ -1,0 +1,21 @@
+.breadcrumb-container {
+    padding-top: 14px;
+
+    .breadcrumb {
+        font-size: 16px;
+        line-height: 18px;
+        font-weight: 400;
+        margin-bottom: 21px;
+
+        .breadcrumb-item {
+            a {
+                text-decoration: underline;
+                color: var(--primary-color);
+
+                i {
+                    padding-right: 4px;
+                }
+            }
+        }
+    }
+}

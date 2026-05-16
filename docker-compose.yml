@@ -1,0 +1,68 @@
+services:
+
+  # PHP / Apache
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goldmember-app
+    ports:
+      - "8080:8080"   # Frontend: http://localhost:8080
+      - "8090:8090"   # Backend:  http://localhost:8090
+    volumes:
+      # Mount the whole project for live code changes
+      - .:/var/www/html/goldmember
+      # Override DB config so the app connects to the "db" container
+      - ./docker/config/db-local.php:/var/www/html/goldmember/common/config/db-local.php:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # MariaDB
+  db:
+    image: mariadb:10.11
+    container_name: goldmember-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: gssamru_goldmember
+      MYSQL_USER: gssamru_autoimport
+      MYSQL_PASSWORD: bGtVSaf2rv6hLWN
+    volumes:
+      # Persist database data
+      - db_data:/var/lib/mysql
+      # Init script - runs only on first startup (when db_data is empty)
+      - ./docker/mysql/01-init.sh:/docker-entrypoint-initdb.d/01-init.sh
+      # The actual SQL dump to be imported
+      - ./gssamru_goldmember.sql:/docker-entrypoint-initdb.d/gssamru_goldmember.sql
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost",
+             "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: goldmember-pma
+    ports:
+      - "8081:80"     # phpMyAdmin: http://localhost:8081
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: rootpassword
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  db_data:
+    driver: local
+
+
+

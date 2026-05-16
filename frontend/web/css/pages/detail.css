@@ -1,0 +1,149 @@
+.auction-details {
+    padding-bottom: 53px;
+
+    .carousel-item {
+        height: 0;
+        padding-bottom: 62%;
+        position: relative;
+
+        img {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    .title-fav-box {
+        .product-name {
+            flex: 1;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 24px;
+            line-height: 26px;
+            margin: 0;
+        }
+    }
+
+    .category {
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 20px;
+        color: var(--gray-color);
+    }
+
+    .info-box {
+        font-weight: 500;
+        font-size: 20px;
+        line-height: 24px;
+        color: var(--gray-color);
+
+        strong {
+            color: var(--black-color);
+        }
+
+        .info-col {
+            margin-right: 20px;
+
+            @media screen and (max-width: 1400px) {
+                margin-right: 10px;
+            }
+
+            p {
+                margin-bottom: 16px;
+            }
+        }
+
+        .icon-button {
+            width: 26px;
+            height: 26px;
+            margin-left: 6px;
+        }
+    }
+
+    .timer {
+        max-width: 420px;
+        margin: 61px auto 33px;
+        text-align: center;
+
+        @media screen and (max-width: 1400px) {
+            margin: 31px auto 20px;
+        }
+
+        .time {
+            border-left: solid 1px var(--gray-color);
+            padding-top: 13px;
+            padding-bottom: 6px;
+
+            &:first-child {
+                border-left: none;
+            }
+
+            strong {
+                font-weight: 400;
+                font-size: 46px;
+                line-height: 46px;
+            }
+
+            small {
+                font-weight: 400;
+                font-size: 14px;
+                line-height: 16px;
+                text-transform: uppercase;
+                color: var(--gray-color);
+            }
+        }
+    }
+
+    .star-rating {
+        margin-top: 11px;
+        margin-bottom: 47px;
+    }
+
+    .button-box {
+
+        width: 100%;
+        max-width: 358px;
+        margin: 0 auto;
+
+        .auction-button {
+            width: 100%;
+        }
+    }
+
+    .description-title {
+        font-weight: 400;
+        font-size: 18px;
+        line-height: 20px;
+        margin-top: 22px;
+        margin-bottom: 11px;
+    }
+
+    .description {
+        padding-right: 18px;
+    }
+
+    .card {
+        margin-left: auto;
+        max-width: 406px;
+        padding: 37px 30px;
+
+        @media screen and (max-width: 1024px) {
+            max-width: 100%;
+            padding: 25px 20px;
+        }
+
+    }
+
+
+    .table-body {
+        border-top: solid 1px var(--primary-color);
+    }
+
+    .table-row {
+
+        border-bottom: solid 1px var(--primary-color);
+    }
+}

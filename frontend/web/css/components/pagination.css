@@ -1,0 +1,30 @@
+.pagination-section {
+    padding-top: 22px;
+    padding-bottom: 52px;
+
+    @media screen and (max-width: 1024px) {
+        padding-bottom: 25px;
+    }
+
+    .page-link {
+        padding: 6px 12px;
+        font-size: 16px;
+        font-weight: 400;
+        color: var(--primary-color);
+        text-decoration: underline;
+
+        @media screen and (max-width: 1024px) {
+            padding: 3px 6px;
+            font-size: 12px;
+        }
+
+        i {
+            display: block;
+            width: 20px;
+
+            @media screen and (max-width: 1024px) {
+                width: auto;
+            }
+        }
+    }
+}

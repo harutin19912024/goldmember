@@ -1,0 +1,95 @@
+.products {
+    .product-item {
+        margin-bottom: 22px;
+
+        .product-link {
+            &:hover {
+                opacity: 1;
+            }
+        }
+
+        .description {
+            padding: 17px 9px 11px 17px;
+            color: var(--gray-color);
+            border-bottom: solid 1px rgba(0, 0, 0, 0.17);
+
+            @media screen and (max-width: 1400px) {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+        }
+
+        .product-name {
+            font-size: 20px;
+            line-height: 22px;
+            font-weight: 400;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+
+            span {
+                font-size: 16px;
+                line-height: 20px;
+            }
+        }
+
+        .category {
+            color: var(--gray-color);
+        }
+
+        .product-img {
+            height: 0;
+            padding-bottom: 63%;
+
+            img {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+
+            .button {
+                border-radius: 4px;
+                top: 17px;
+                right: 16px;
+
+                &:hover {
+                    opacity: 0.5;
+                }
+
+                .bi-heart-fill {
+                    color: var(--primary-color);
+                }
+            }
+        }
+
+        .deadline-more-box {
+            display: flex;
+            align-items: center;
+            padding: 10px 17px 16px;
+
+            @media screen and (max-width: 1400px) {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .button {
+                margin-left: 10px;
+
+                @media screen and (max-width: 1400px) {
+                    margin-left: 5px;
+                }
+            }
+
+            .deadline-box {
+                flex: 1;
+
+                &:not(.danger-text) {
+                    color: var(--gray-color);
+                }
+
+                @media screen and (max-width: 1400px) {
+                    font-size: 12px;
+                }
+            }
+        }
+    }
+}

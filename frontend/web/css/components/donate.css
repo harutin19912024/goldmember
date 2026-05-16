@@ -1,0 +1,63 @@
+.bank-details, .donation-form {
+    background: #fff;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.donate-image {
+    background-color: var(--white-color);
+}
+h2 {
+    color: #333;
+}
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.form-group{
+    width: 100%;
+}
+label {
+    margin-top: 10px;
+    font-weight: bold;
+}
+input, select, textarea {
+    width: 80%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.donation-amounts {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+.donation-amounts button {
+    padding: 10px 20px;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.donation-amounts button:hover {
+    background: #218838;
+}
+.donate-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+.donate-button:hover {
+    background: #25dfd9;
+}

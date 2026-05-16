@@ -1,0 +1,61 @@
+# Yii console command (generated)
+/yii
+
+# IDE files
+.idea
+nbproject
+.buildpath
+.project
+.settings
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Composer vendor
+/vendor
+
+# Composer binary
+composer.phar
+
+# PHPUnit
+phpunit.phar
+/phpunit.xml
+
+# Vagrant
+/.vagrant
+.vagrant/
+
+# Yii2 runtime / generated files
+/frontend/runtime/
+/backend/runtime/
+/console/runtime/
+
+# Environment-specific local config files (have real passwords/secrets)
+/common/config/db-local.php
+/frontend/config/main-local.php
+/frontend/config/params-local.php
+/frontend/config/params.php
+/backend/config/main-local.php
+/backend/config/params-local.php
+/common/config/params-local.php
+
+# Large or generated asset files
+/frontend/web/assets/
+/backend/web/assets/
+
+# Node modules (if any)
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Logs
+error.log
+error_log
+*.log
+
+# Upload directories (large user-uploaded files)
+/backend/web/uploads/
+/frontend/web/uploads/

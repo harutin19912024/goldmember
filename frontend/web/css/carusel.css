@@ -1,0 +1,158 @@
+.carousel-container {
+    overflow: hidden;
+    height: 100%; /* Set the height you want for the visible part of the carousel */
+    /*border: 2px solid #ddd;*/
+    /*border-radius: 8px;*/
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#scrollUpBtn{
+    background-color: black;
+    z-index: 1;
+    width: 50%;
+    margin-top: 48px;
+    color: wheat;
+    cursor: pointer;
+}
+
+#scrollDownBtn {
+    background-color: black;
+    z-index: 1;
+    width: 50%;
+    margin-top: 48px;
+    color: wheat;
+    cursor: pointer;
+}
+
+.carousel {
+    display: flex;
+    flex-direction: column;
+    animation: scroll 30s linear infinite;
+}
+
+.carousel-item-news {
+    padding: 20px;
+    /*background-color: #fff;*/
+    /*border-bottom: 1px solid #ddd;*/
+    box-sizing: border-box;
+}
+
+.carousel-container:hover .carousel {
+    animation-play-state: paused;
+}
+.carousel-control {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: #16c7bf;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.carousel-control.up {
+    top: 0;
+}
+
+.carousel-control.down {
+    bottom: 0;
+}
+
+.carousel-container {
+    position: relative;
+}
+
+
+@keyframes scroll {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-100%);
+    }
+}
+
+
+.gold-diagram {
+    position: relative;
+    box-sizing: content-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
+    margin: 0px auto !important;
+    padding: 0px !important;
+    width: 100%;
+    height: calc(458px);
+}
+
+
+.image-zoom-in {
+  width: 100%; /* Set the initial width of the image */
+  height: 100%; /* Set the initial height of the image */
+  transition: transform 0.5s ease; /* Smooth transition */
+}
+
+.image-zoom-in:hover {
+  transform: scale(1.2); /* Zoom in by scaling to 120% */
+}
+
+.image-zoom-out {
+  width: 100%; /* Set the initial width of the image */
+  height: 100%; /* Set the initial height of the image */
+  transition: transform 0.5s ease; /* Smooth transition */
+}
+
+.image-zoom-out:hover {
+  transform: scale(0.8); /* Zoom out by scaling to 80% */
+}
+
+
+.video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.video-iframe {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.menu-for-rectangle{
+    display:none;
+    margin-right: 90px;
+}
+/*.menu-for-rectangle:nth-last-child(3){*/
+/*    margin-right: 100px;*/
+/*}*/
+.menu-for-rectangle a {
+    font-size: 25px;
+}
+
+.table {
+        background-color: black; /* Set background color to black */
+        color: white; /* Change text color to white for contrast */
+    }
+.table th {
+    background-color: black; /* Optional: Darker background for headers */
+     color: white; /* Change text color to white for contrast */
+}
+
+.table td {
+    background-color: black; /* Optional: Darker background for headers */
+     color: white; /* Change text color to white for contrast */
+}
+
+.language li {
+    list-style: none;
+    float: left;
+    padding: 10px;
+}
+.language li a {
+    color: white;
+}

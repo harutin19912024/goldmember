@@ -1,0 +1,62 @@
+.quote-section {
+    padding-top: 36px;
+    padding-bottom: 53px;
+    font-family: 'Inter', sans-serif;
+
+    .quote-title {
+        line-height: 24px;
+        font-size: 32px;
+        margin-bottom: 34px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .content-wrapper {
+        padding-top: 40px;
+        padding-bottom: 35px;
+    }
+
+    .content {
+        padding-left: 32px;
+    }
+
+
+    .text-content p:nth-child(1) {
+        font-size: 20px;
+        line-height: 30px;
+        font-weight: 400;
+        padding-right: 46px;
+        padding-left: 23px;
+        margin-bottom: 30px;
+        font-family: 'Inter', sans-serif;
+        border-left: 1px solid var(--primary-color);
+    }
+
+    .quote-person-info {
+        padding-right: 26px;
+    }
+
+    .quote-person-name {
+        font-size: 20px;
+        line-height: 30px;
+        font-weight: 500;
+        font-family: 'Inter', sans-serif;
+        display: block;
+        padding-top: 27px;
+        padding-bottom: 2px;
+    }
+
+    .quote-person-position {
+        font-size: 16px;
+        line-height: 20px;
+        font-weight: 400;
+        font-family: 'Inter', sans-serif;
+        color: var(--gray-color);
+    }
+
+    .quote-icon {
+        display: block;
+        width: 95px;
+        font-size: 150px;
+        height: 80px;
+    }
+}

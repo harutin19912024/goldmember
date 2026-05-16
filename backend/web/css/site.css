@@ -1,0 +1,339 @@
+html,
+body {
+    height: 100%;
+    min-height: 900px !important;
+}
+.colorDot{
+    height: 25px;width: 25px; border-radius: 50%; display: inline-block;
+}
+
+.wrap {
+    min-height: 100%;
+    height: auto;
+    margin: 0 auto -60px;
+    padding: 0 0 60px;
+}
+
+.wrap > .container {
+    padding: 70px 15px 20px;
+}
+
+.footer {
+    height: 60px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #ddd;
+    padding-top: 20px;
+}
+
+.jumbotron {
+    text-align: center;
+    background-color: transparent;
+}
+
+.jumbotron .btn {
+    font-size: 21px;
+    padding: 14px 24px;
+}
+
+.not-set {
+    color: #c55;
+    font-style: italic;
+}
+
+/* add sorting icons to gridview sort links */
+table.dataTable thead tr th a.asc:after, a.desc:after, a:after,
+table.admin-form thead tr th a.asc:after, a.desc:after, a:after {
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    padding-left: 5px;
+    color: #9d9d9d;
+}
+
+table.dataTable thead tr th a.asc:after,
+table.admin-form thead tr th a.asc:after {
+    /*content: !*"\e113"*! "\e151";*/
+    content: "\f0de";
+    color: #2a74d6;
+}
+
+table.dataTable thead tr th a.desc:after,
+table.admin-form thead tr th a.desc:after {
+    /*content: !*"\e114"*! "\e152";*/
+    content: "\f0dd";
+    color: #2a74d6;
+}
+
+table.dataTable thead tr th a:after,
+table.admin-form thead tr th a:after {
+    content: "\f0dc";
+}
+
+.sort-numerical a.asc:after {
+    content: "\e153";
+}
+
+.sort-numerical a.desc:after {
+    content: "\e154";
+}
+
+.sort-ordinal a.asc:after {
+    content: "\e155";
+}
+
+.sort-ordinal a.desc:after {
+    content: "\e156";
+}
+
+.grid-view td {
+    white-space: nowrap;
+}
+
+.grid-view .filters input,
+.grid-view .filters select {
+    min-width: 50px;
+}
+
+.hint-block {
+    display: block;
+    margin-top: 5px;
+    color: #999;
+}
+
+.error-summary {
+    color: #a94442;
+    background: #fdf7f7;
+    border-left: 3px solid #eed3d7;
+    padding: 10px 20px;
+    margin: 0 0 15px 0;
+}
+
+/* align the logout "link" (button in form) of the navbar */
+.nav > li > form {
+    padding: 8px;
+}
+
+@media (max-width: 768px) {
+    .nav li > form {
+        padding: 3px;
+    }
+}
+
+.nav > li > form > button:hover {
+    text-decoration: none;
+}
+
+#loginform-username, #loginform-password {
+    padding-left: 35px;
+}
+
+table.dataTable > thead > tr > td,
+table.admin-form > thead > tr > td {
+    background: #f9f9f9;
+    font-weight: 600;
+    vertical-align: bottom;
+    border-bottom: 1px solid #eeeeee;
+}
+
+table.dataTable > thead > tr > th > a,
+table.admin-form > thead > tr > th > a {
+    color: #666666;
+}
+
+table.dataTable > thead > tr > th > a:hover,
+table.admin-form > thead > tr > th > a:hover {
+    color: #666666;
+    text-decoration: none;
+}
+
+.prod-search-status {
+    color: #8E8E94 !important;
+}
+
+.prod-search-status option {
+    color: #555 !important;
+}
+
+.image-preview {
+    width: 100px;
+}
+
+.no-padding {
+    padding: 0 !important;
+    margin-right: 25px;
+}
+
+.no-paddind-left {
+    padding-left: 0 !important;
+}
+
+.default-view, .default-img {
+    border: 2px solid #2a74d6;
+    border-radius: 5px;
+}
+#tbl_product > thead:nth-child(1) > tr:nth-child(1) > th:nth-child(5),
+#tbl_product > thead:nth-child(1) > tr:nth-child(1) > th:nth-child(6),
+#tbl_product > thead:nth-child(1) > tr:nth-child(1) > th:nth-child(7) {
+    width: 100px;
+}
+
+.mfp-title {
+    word-wrap: normal !important;
+}
+
+span.remove .icon-close {
+    color: #555;
+    position: absolute;
+}
+
+span.remove .icon-close-news {
+    color: #555;
+    position: absolute;
+}
+
+span.remove .icon-close-attr{
+    color: #555;
+    position: absolute;
+}
+
+span.remove .page-remove-image {
+    color: #555;
+    position: absolute;
+}
+
+#input-area {
+    width: 81%;
+    float: left;
+}
+
+.mcol-md-2 {
+    width: 22.2222222222%;
+    float: left;
+    position: relative;
+    min-height: 1px;
+    padding-left: 11px;
+    padding-right: 11px;
+}
+
+.addr-err, .part-err {
+    color: red;
+}
+
+.pft140 {
+    position: fixed;
+    top: 140px;
+}
+
+.maxw250 {
+    max-width: 250px;
+}
+.minw250 {
+    min-width: 250px;
+}
+
+@media screen and (max-width: 1016px) {
+    .mt-150, .mt-75 {
+        margin-top: 0px !important;
+    }
+}
+
+.field-productsearch-price,
+.field-productsearch-created_date {
+    margin-bottom: 0 !important;
+}
+
+.brand-form {
+    background: #ffffff !important;
+}
+
+.link,
+.Customerlink,
+.Repairerlink,
+.Repairlink{
+    text-decoration: none;
+    color: #aaaaaa;
+}
+
+.link:hover,
+.Customerlink:hover,
+.Repairerlink:hover,
+.Repairlink:hover{
+/*     text-decoration: none;
+    color: #555555;
+    font-weight: 600; */
+}
+
+.table-layout .filter {
+    vertical-align: top;
+    display: table-cell;
+    float: none;
+}
+.mix.label1.folder1 {
+    margin-left: 16px;
+}
+.mix2.label1.folder1 {
+    margin-left: 16px;
+}
+.list-status{
+    position: relative;
+    top: 12px;
+}
+.navbar-brand img{
+    display: inline-block;
+    width: 130px;
+}
+.chsts{
+    vertical-align: initial;
+}
+.chsts > label{
+    border: 1px !important;
+    vertical-align: middle;
+}
+.chsts > input + label:after{
+    width: 12px !important;
+    height: 12px !important;
+    top:2px;
+}
+.chsts > input:checked + label:after {
+    width: 12px !important;
+    height: 12px !important;
+}
+.label-system{
+    background:#37bc9b !important;
+}
+.label-danger{
+    background: #E9573F !important;
+}
+
+.table-layout > div, .table-layout > aside, .table-layout > section{
+    vertical-align: inherit !important;
+}
+.tray-right{
+    top: -25px;
+    right: -25px;
+}
+.sale-stock{
+	margin-top: 10px;
+}
+.m10{
+	margin-top: 10px;
+}
+.main-images{
+    border: 2px solid black;
+    border-radius: 15px;
+    border-top-width: 5px;
+    min-height: 180px !important;
+}
+.product-count-content{
+	    margin-top: 27px;
+    height: 50px;
+    padding: 7px;
+    padding-left: 45px;
+	-webkit-box-shadow: 2px 9px 47px 6px rgba(115,199,82,1);
+-moz-box-shadow: 2px 9px 47px 6px rgba(115,199,82,1);
+box-shadow: 2px 9px 47px 6px rgba(115,199,82,1);
+}
