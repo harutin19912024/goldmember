@@ -27,16 +27,33 @@ $action = Yii::$app->controller->action->id;
 $controller = Yii::$app->controller->id;
 
 $languages = Language::find()->asArray()->all();
-$language = Language::find()->where(['short_code' => Yii::$app->language])->asArray()->one();
+$currentLang = Yii::$app->language; // e.g. 'am' or 'en'
+$language = Language::find()->where(['short_code' => $currentLang])->asArray()->one();
 
-if(empty($language) || !isset($language['short_code'])) {
+if (empty($language) || !isset($language['short_code'])) {
     $this->registerJs("window.location.href = '/en';");
 }
 
 $socialLinks = SocialNet::find()->all();
-//echo "<pre>"; print_r($currentUrl);die;
 
 $currentUrl = trim($_SERVER['REQUEST_URI']);
+
+// Build a language-switch URL for each language that keeps the user on the current page.
+// Current URL may start with /en/... or just /... (default AM).
+// Strip existing language prefix, then prepend the target language prefix.
+$currentPath = preg_replace('#^/(en|am)(/|$)#', '/', $currentUrl);  // strip any /en/ or /am/
+$currentPath = '/' . ltrim($currentPath, '/');
+
+$langSwitchUrls = [];
+foreach ($languages as $_lang) {
+    $code = $_lang['short_code'];
+    if ($code === 'am') {
+        // AM is the default — no prefix needed
+        $langSwitchUrls[$code] = $currentPath ?: '/';
+    } else {
+        $langSwitchUrls[$code] = '/' . $code . $currentPath;
+    }
+}
 //echo "<pre>"; print_r($currentUrl);die;
 $com = strcmp($currentUrl, "/site/index");
 $staticPages = Pages::findList(['type' => 0]);
@@ -403,14 +420,14 @@ $this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END,
                 <div class="dropdown w-auto mt-5 mt-md-0 ps-md-3 ps-0 me-md-0 me-auto">
                     <button class="btn primary-color dropdown-toggle pe-md-0" type="button" data-bs-toggle="dropdown"
                         aria-expanded="false">
-                        <?= strtoupper($language['short_code']) ?>
+                        <?= strtoupper($currentLang) ?>
                     </button>
-                     <ul class="dropdown-menu language-dropdown">
-                        <?php foreach ($languages as $language): ?>
+                    <ul class="dropdown-menu language-dropdown">
+                        <?php foreach ($languages as $lang): ?>
                             <li>
-                                <a class="dropdown-item lang-<?= $language['short_code'] ?>"
-                                   href="/<?= $language['short_code'] ?>">
-                                    <?= strtoupper($language['short_code']) ?>
+                                <a class="dropdown-item lang-<?= $lang['short_code'] ?><?= $lang['short_code'] === $currentLang ? ' active' : '' ?>"
+                                   href="<?= Html::encode($langSwitchUrls[$lang['short_code']]) ?>">
+                                    <?= strtoupper($lang['short_code']) ?>
                                 </a>
                             </li>
                         <?php endforeach; ?>
