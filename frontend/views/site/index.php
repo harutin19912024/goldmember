@@ -19,12 +19,12 @@ use yii\widgets\ActiveForm;
 use kartik\select2\Select2;
 use yii\db\Query;
 use common\models\MetalPriceReal;
-use Detection\MobileDetect;
+// Detection\MobileDetect removed — PHP 8.2 type incompatibility; use CSS/srcset instead
 use common\components\UserComponent;
 use common\models\Language;
 
 
-$detect = new MobileDetect;
+// Mobile detection via CSS (media queries) — no PHP needed
 
 $language = Language::find()->where(['short_code' => Yii::$app->language])->one();
 
@@ -108,7 +108,12 @@ $metalPriceApiData = MetalPriceReal::find()
 
 <section class="position-relative main-banner bg-black-color">
     <div class="position-absolute top-0 start-0 left-0 w-100 h-100 img-div">
-        <img class="w-100 h-100" src="<?php if(!$detect->isMobile()): ?>/images/home-page.jpeg<?php else: ?>/images/home-page-small.jpg<?php endif; ?>" alt="Banner Image" height="400" width="1442"/>
+        <!-- Use srcset for responsive image — avoids PHP MobileDetect dependency -->
+        <img class="w-100 h-100"
+             src="/images/home-page.jpeg"
+             srcset="/images/home-page-small.jpg 768w, /images/home-page.jpeg 1442w"
+             sizes="(max-width: 768px) 768px, 1442px"
+             alt="Banner Image" height="400" width="1442" loading="eager"/>
     </div>
     <div class="row w-100 container mx-auto position-relative zindex-offcanvas-backdrop h-100 px-3 px-md-0 d-flex align-items-end">
         <div class="col-md-4 col-12 px-0">
@@ -314,7 +319,15 @@ $metalPriceApiData = MetalPriceReal::find()
                         </div>
                     </div>
                     <div class="table primary-color" id="trade" role="tabpanel" aria-labelledby="global-tab">
-                        <iframe title="advanced chart TradingView widget" lang="en" id="tradingview_6e6d6" frameborder="0" allowtransparency="true" scrolling="no" allowfullscreen="true" src="https://s.tradingview.com/kitco/widgetembed/?hideideas=1&amp;overrides=%7B%7D&amp;enabled_features=%5B%5D&amp;disabled_features=%5B%5D&amp;locale=en#%7B%22symbol%22%3A%22XAUUSD%22%2C%22frameElementId%22%3A%22tradingview_6e6d6%22%2C%22interval%22%3A%221%22%2C%22hide_side_toolbar%22%3A%221%22%2C%22allow_symbol_change%22%3A%221%22%2C%22save_image%22%3A%220%22%2C%22studies%22%3A%22%5B%5D%22%2C%22theme%22%3A%22light%22%2C%22style%22%3A%221%22%2C%22timezone%22%3A%22America%2FNew_York%22%2C%22withdateranges%22%3A%221%22%2C%22studies_overrides%22%3A%22%7B%7D%22%2C%22utm_source%22%3A%22www.kitco.com%22%2C%22utm_medium%22%3A%22widget_new%22%2C%22utm_campaign%22%3A%22chart%22%2C%22utm_term%22%3A%22XAUUSD%22%2C%22page-uri%22%3A%22www.kitco.com%2Fcharts%2Fgold%22%7D" style="width: 100%; height: 600px;"></iframe>
+                        <!-- TradingView chart: loaded lazily only when the Trade tab is active -->
+                        <div id="tradingview-placeholder"
+                             data-src="https://s.tradingview.com/kitco/widgetembed/?hideideas=1&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en#%7B%22symbol%22%3A%22XAUUSD%22%2C%22frameElementId%22%3A%22tv_gold%22%2C%22interval%22%3A%221%22%2C%22hide_side_toolbar%22%3A%221%22%2C%22allow_symbol_change%22%3A%221%22%2C%22save_image%22%3A%220%22%2C%22theme%22%3A%22light%22%2C%22style%22%3A%221%22%2C%22timezone%22%3A%22America%2FNew_York%22%2C%22withdateranges%22%3A%221%22%7D"
+                             style="width:100%;height:500px;display:flex;align-items:center;justify-content:center;background:#0a1818;color:#53E2D9;cursor:pointer;border-radius:4px;">
+                            <div class="text-center">
+                                <i class="bi bi-bar-chart-line" style="font-size:2.5rem;"></i>
+                                <p class="mt-2 mb-0"><?= Yii::t('app', 'Click to load live gold chart') ?></p>
+                            </div>
+                        </div>
                     </div>
 
                     <a href="/<?=Yii::$app->language?>/more-details" class="info-text"><?=Yii::t('app', 'Show more')?> <i class="bi bi-arrow-right-short"></i></a>
@@ -372,7 +385,53 @@ $metalPriceApiData = MetalPriceReal::find()
 
     <!-- Background Map -->
 
-    <div class="map-background w-100 position-absolute">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3048.529914386416!2d44.506797176539166!3d40.17501897031453!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x406abddabe0c3071%3A0x4aa102e32cb6e5f7!2sGoldmember!5e0!3m2!1sen!2sam!4v1730750217913!5m2!1sen!2sam" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div class="map-background w-100 position-absolute" id="map-container"
+         style="background:linear-gradient(135deg,#0d2020 0%,#071414 100%);cursor:pointer;"
+         data-map-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3048.529914386416!2d44.506797176539166!3d40.17501897031453!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x406abddabe0c3071%3A0x4aa102e32cb6e5f7!2sGoldmember!5e0!3m2!1sen!2sam!4v1730750217913!5m2!1sen!2sam"
+         title="Click to load map">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#13B2AD;pointer-events:none;">
+            <i class="bi bi-geo-alt" style="font-size:2rem;"></i>
+            <p class="small mt-1" style="color:#53E2D9;">20 Movses Khorenatsi Street, Yerevan</p>
+        </div>
     </div><!-- End Contact Form -->
 </section>
+
+<script>
+// Lazy-load iframes on click (TradingView chart + Google Maps)
+// Prevents ~250 extra network requests on page load
+(function () {
+    function lazyIframe(placeholderId, srcAttr, iframeAttrs) {
+        var ph = document.getElementById(placeholderId);
+        if (!ph) return;
+        ph.addEventListener('click', function () {
+            var src = ph.getAttribute(srcAttr);
+            var iframe = document.createElement('iframe');
+            Object.assign(iframe, iframeAttrs);
+            iframe.src = src;
+            iframe.style.cssText = 'width:100%;height:100%;border:0;';
+            ph.parentNode.replaceChild(iframe, ph);
+        }, { once: true });
+    }
+
+    lazyIframe('tradingview-placeholder', 'data-src', {
+        title: 'Gold price chart', frameBorder: '0',
+        allowTransparency: true, scrolling: 'no', allowFullscreen: true
+    });
+
+    // Map container
+    var mc = document.getElementById('map-container');
+    if (mc) {
+        mc.addEventListener('click', function () {
+            var src = mc.getAttribute('data-map-src');
+            var iframe = document.createElement('iframe');
+            iframe.src = src; iframe.allowFullscreen = true;
+            iframe.setAttribute('loading', 'lazy');
+            iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+            iframe.style.cssText = 'width:100%;height:100%;border:0;';
+            mc.innerHTML = '';
+            mc.appendChild(iframe);
+            mc.style.cursor = 'default';
+        }, { once: true });
+    }
+})();
+</script>

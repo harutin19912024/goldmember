@@ -94,10 +94,23 @@ return [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
+        'cache' => [
+            'class' => 'yii\caching\FileCache',
+        ],
+        'assetManager' => [
+            'appendTimestamp' => true,  // adds ?v=timestamp for cache-busting
+            'bundles' => [
+                // Force minified jQuery regardless of YII_DEBUG
+                'yii\web\JqueryAsset' => [
+                    'js' => ['jquery.min.js'],
+                ],
+            ],
+        ],
         'i18n' => [
             'translations' => [
                 'app*' => [
-                    'class' => 'yii\i18n\DbMessageSource',
+                    'class'           => 'yii\i18n\DbMessageSource',
+                    'cachingDuration' => 3600, // cache translations for 1 hour
                 ],
             ],
         ],
