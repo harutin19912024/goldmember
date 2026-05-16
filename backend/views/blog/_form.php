@@ -4,6 +4,9 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use yii\helpers\Url;
 use kartik\select2\Select2;
+use common\models\Language;
+
+$languages = Language::find()->asArray()->all();
 
 /* @var $this yii\web\View */
 /* @var $model backend\models\Blog */
@@ -29,12 +32,28 @@ if (!$model->isNewRecord) {
     <div class="panel sort-disable mb50" id="p2" data-panel-color="false"
          data-panel-fullscreen="false" data-panel-remove="false" data-panel-title="false">
         <div class="panel-heading">
-            <span class="panel-title"><?php echo Yii::t('app', 'Add New blog') ?></span>
-                                    <span class="panel-controls"><a href="#" class="panel-control-loader"></a><a
-                                            href="#" class="panel-control-collapse"></a></span></div>
+            <span class="panel-title"><?= Yii::t('app', 'Blog') ?></span>
+            <?php if (!$model->isNewRecord): ?>
+            <ul class="nav panel-tabs-border panel-tabs">
+                <?php foreach ($languages as $lang): ?>
+                    <li class="<?= $lang['is_default'] ? 'active' : '' ?>">
+                        <a href="#tab_bl_<?= $lang['id'] ?>" data-toggle="tab"
+                           onclick="editBlogTr(<?= $lang['id'] ?>, <?= $model->id ?>, <?= $lang['is_default'] ?>)">
+                            <span class="flag-xs flag-<?= $lang['short_code'] ?>"></span>
+                        </a>
+                    </li>
+                <?php endforeach ?>
+            </ul>
+            <?php endif ?>
+            <span style="float:left;" class="panel-controls">
+                <a href="#" class="panel-control-loader"></a>
+                <a href="#" style="margin-left:5px" class="panel-control-collapse"></a>
+            </span>
+        </div>
 
         <div class="panel-body" style="display: block;">
             <div class="tab-content pn br-n admin-form">
+                <div class="tab-pane" id="tr_blog"></div>
                 <div class="section row">
                     <div class="col-md-6">
                         <?= $form->field($model, 'title',

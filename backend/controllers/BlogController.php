@@ -28,7 +28,7 @@ class BlogController extends Controller
                     'index' => ['GET', 'POST'],
                     'view' => ['GET'],
                     'create' => ['POST'],
-                    'update' => ['POST'],
+                    'update' => ['GET', 'POST'],
                     'delete' => ['POST'],
                 ],
             ],
