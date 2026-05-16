@@ -56,7 +56,7 @@ return [
     'id' => 'app-frontend',
     'basePath' => dirname(__DIR__),
     'language' => 'am',
-    'sourceLanguage' => 'am',
+    'sourceLanguage' => 'en',
     'controllerNamespace' => 'frontend\controllers',
     'defaultRoute' => 'site/index',
     'bootstrap' => ['visitorTracker'],
