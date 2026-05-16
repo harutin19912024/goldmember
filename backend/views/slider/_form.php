@@ -27,8 +27,28 @@ if (!$model->isNewRecord) {
 <div class="categoyr-form">
     <?= Html::a(Yii::t('app','Back to slider list'), ['/slider/index'], ['class' => 'btn btn-primary mb15']) ?>
     <div class="panel sort-disable mb50" id="p2" data-panel-color="false" data-panel-fullscreen="false" data-panel-remove="false" data-panel-title="false">
-        <div class="panel-body"  style="display: block;">
+        <div class="panel-heading">
+            <span class="panel-title"><?= Yii::t('app', 'Slider') ?></span>
+            <?php if (!$model->isNewRecord): ?>
+            <ul class="nav panel-tabs-border panel-tabs">
+                <?php foreach ($languages as $lang): ?>
+                    <li class="<?= $lang['is_default'] ? 'active' : '' ?>">
+                        <a href="#tab_sl_<?= $lang['id'] ?>" data-toggle="tab"
+                           onclick="editSliderTr(<?= $lang['id'] ?>, <?= $model->id ?>, <?= $lang['is_default'] ?>)">
+                            <span class="flag-xs flag-<?= $lang['short_code'] ?>"></span>
+                        </a>
+                    </li>
+                <?php endforeach ?>
+            </ul>
+            <?php endif ?>
+            <span style="float:left;" class="panel-controls">
+                <a href="#" class="panel-control-loader"></a>
+                <a href="#" style="margin-left:5px" class="panel-control-collapse"></a>
+            </span>
+        </div>
+        <div class="panel-body" style="display: block;">
             <div class="tab-content pn br-n admin-form">
+                <div class="tab-pane" id="tr_slider"></div>
                 <div class="tab-pane active">
                     <?php
                     $form = ActiveForm::begin([
