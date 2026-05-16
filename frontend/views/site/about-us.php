@@ -11,20 +11,41 @@ $about = Aboutus::find_One();
 $teams = Team::find()->all();
 ?>
 
-<!-- Page Title -->
-<div class="page-title dark-background" style="background-image: url(/img/cta-bg.jpg); background-size: cover; background-position: center;">
-    <div class="container">
-        <div class="heading">
-            <h1><?= Html::encode($about[0]['title']) ?></h1>
-        </div>
-        <nav aria-label="breadcrumb">
-            <ol>
-                <li><a href="/"><?= Yii::t('app', 'Home') ?></a></li>
-                <li><?= Yii::t('app', 'About Us') ?></li>
-            </ol>
-        </nav>
+<!-- Hero Banner -->
+<section class="position-relative main-banner bg-black-color">
+    <div class="position-absolute top-0 start-0 left-0 w-100 h-100">
+        <img class="w-100 h-100" src="/images/about-banner.svg" alt="About Us Banner" height="400" width="1442"/>
     </div>
-</div><!-- /Page Title -->
+    <div class="row w-100 container mx-auto position-relative zindex-offcanvas-backdrop h-100 px-3 px-md-0 d-flex align-items-end">
+        <div class="col-md-5 col-12 px-0">
+            <h1 class="display-6 primary-alternate-color text-uppercase px-0 mb-2 pb-2 title">
+                <?= Yii::t('app', 'About Goldmember') ?>
+            </h1>
+            <p class="text-content fs-4 pb-1 white-color fw-normal mb-5 h-base">
+                <?= Yii::t('app', 'Armenia\'s trusted platform for gold and precious metals — buy, sell and trade with confidence.') ?>
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Sub-heading -->
+<section class="container breadcrumb-container py-2 px-sm-0">
+    <div class="row px-0">
+        <div class="col-sm-12">
+            <div class="container">
+                <div class="row d-flex justify-content-center text-center">
+                    <div class="col-lg-8">
+                        <h1><?= Html::encode($about[0]['title'] ?? Yii::t('app', 'Gold Member')) ?></h1>
+                        <p class="mb-0"><?= Yii::t('app', 'Congratulations, you finally found the top wholesale platform of gold, golden jewelry and diamonds in region.') ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Breadcrumb -->
+<?= $this->render('partials/breadcrumb', ['prev' => 'Home', 'prevUrl' => '/' . Yii::$app->language, 'current' => 'About Us']) ?>
 
 <!-- About Section -->
 <section id="about" class="about section light-background">

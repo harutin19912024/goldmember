@@ -1,0 +1,191 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1442 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="bgAbout" cx="65%" cy="45%" r="75%">
+      <stop offset="0%" stop-color="#1a1200"/>
+      <stop offset="60%" stop-color="#0d0d0d"/>
+      <stop offset="100%" stop-color="#050505"/>
+    </radialGradient>
+    <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#D4A017" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tealGlow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#13B2AD" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#13B2AD" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5D060"/>
+      <stop offset="30%" stop-color="#D4A017"/>
+      <stop offset="55%" stop-color="#8B6200"/>
+      <stop offset="75%" stop-color="#D4A017"/>
+      <stop offset="100%" stop-color="#F5D060"/>
+    </linearGradient>
+    <linearGradient id="ringGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E8C84A"/>
+      <stop offset="40%" stop-color="#9A7010"/>
+      <stop offset="70%" stop-color="#D4A017"/>
+      <stop offset="100%" stop-color="#E8C84A"/>
+    </linearGradient>
+    <linearGradient id="ringSmall" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0CC80"/>
+      <stop offset="50%" stop-color="#9A7010"/>
+      <stop offset="100%" stop-color="#E0CC80"/>
+    </linearGradient>
+    <filter id="softBlur">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="glow2">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="dropShadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#D4A017" flood-opacity="0.4"/>
+    </filter>
+    <linearGradient id="leftFade2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#050505" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#050505" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1442" height="400" fill="url(#bgAbout)"/>
+
+  <!-- Ambient glows -->
+  <ellipse cx="1050" cy="180" rx="380" ry="260" fill="url(#goldGlow)" filter="url(#softBlur)"/>
+  <ellipse cx="1300" cy="300" rx="200" ry="150" fill="url(#tealGlow2)" filter="url(#softBlur)"/>
+
+  <!-- Subtle dot pattern -->
+  <g opacity="0.04" fill="#D4A017">
+    <circle cx="700" cy="50" r="2"/><circle cx="750" cy="50" r="2"/><circle cx="800" cy="50" r="2"/>
+    <circle cx="850" cy="50" r="2"/><circle cx="900" cy="50" r="2"/><circle cx="950" cy="50" r="2"/>
+    <circle cx="1000" cy="50" r="2"/><circle cx="1050" cy="50" r="2"/><circle cx="1100" cy="50" r="2"/>
+    <circle cx="700" cy="100" r="2"/><circle cx="750" cy="100" r="2"/><circle cx="800" cy="100" r="2"/>
+    <circle cx="850" cy="100" r="2"/><circle cx="900" cy="100" r="2"/><circle cx="950" cy="100" r="2"/>
+    <circle cx="1000" cy="100" r="2"/><circle cx="1050" cy="100" r="2"/><circle cx="1100" cy="100" r="2"/>
+    <circle cx="700" cy="150" r="2"/><circle cx="750" cy="150" r="2"/><circle cx="800" cy="150" r="2"/>
+    <circle cx="850" cy="150" r="2"/><circle cx="900" cy="150" r="2"/><circle cx="950" cy="150" r="2"/>
+    <circle cx="1000" cy="150" r="2"/><circle cx="1050" cy="150" r="2"/><circle cx="1100" cy="150" r="2"/>
+    <circle cx="700" cy="200" r="2"/><circle cx="750" cy="200" r="2"/><circle cx="800" cy="200" r="2"/>
+    <circle cx="850" cy="200" r="2"/><circle cx="900" cy="200" r="2"/><circle cx="950" cy="200" r="2"/>
+    <circle cx="1000" cy="200" r="2"/><circle cx="1050" cy="200" r="2"/><circle cx="1100" cy="200" r="2"/>
+    <circle cx="700" cy="250" r="2"/><circle cx="750" cy="250" r="2"/><circle cx="800" cy="250" r="2"/>
+    <circle cx="850" cy="250" r="2"/><circle cx="900" cy="250" r="2"/><circle cx="950" cy="250" r="2"/>
+    <circle cx="1000" cy="250" r="2"/><circle cx="1050" cy="250" r="2"/><circle cx="1100" cy="250" r="2"/>
+    <circle cx="700" cy="300" r="2"/><circle cx="750" cy="300" r="2"/><circle cx="800" cy="300" r="2"/>
+    <circle cx="850" cy="300" r="2"/><circle cx="900" cy="300" r="2"/><circle cx="950" cy="300" r="2"/>
+    <circle cx="1000" cy="300" r="2"/><circle cx="1050" cy="300" r="2"/><circle cx="1100" cy="300" r="2"/>
+    <circle cx="700" cy="350" r="2"/><circle cx="750" cy="350" r="2"/><circle cx="800" cy="350" r="2"/>
+    <circle cx="850" cy="350" r="2"/><circle cx="900" cy="350" r="2"/><circle cx="950" cy="350" r="2"/>
+    <circle cx="1000" cy="350" r="2"/><circle cx="1050" cy="350" r="2"/><circle cx="1100" cy="350" r="2"/>
+  </g>
+
+  <!-- ===== MAIN RING (large, center-right) ===== -->
+  <g transform="translate(920, 60)" filter="url(#dropShadow)">
+    <!-- Outer ring band -->
+    <circle cx="140" cy="140" r="125" fill="none" stroke="url(#ringGrad)" stroke-width="28"/>
+    <!-- Inner shine arc -->
+    <path d="M 50 90 A 120 120 0 0 1 200 60" fill="none" stroke="#F5D060" stroke-width="6" opacity="0.35" stroke-linecap="round"/>
+    <!-- Diamond on top -->
+    <g transform="translate(106, 12)">
+      <polygon points="34,0 60,20 34,50 8,20" fill="#B2EDEB" opacity="0.9"/>
+      <polygon points="34,0 60,20 34,28" fill="#53E2D9" opacity="0.8"/>
+      <polygon points="34,0 8,20 34,28" fill="#13B2AD" opacity="0.8"/>
+      <polygon points="60,20 34,28 34,50" fill="#0a7a76" opacity="0.8"/>
+      <polygon points="8,20 34,28 34,50" fill="#0d9e99" opacity="0.7"/>
+      <!-- Sparkle -->
+      <line x1="34" y1="-8" x2="34" y2="58" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+      <line x1="-8" y1="25" x2="76" y2="25" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+    </g>
+    <!-- Engrave lines on ring -->
+    <circle cx="140" cy="140" r="109" fill="none" stroke="#000" stroke-width="1" opacity="0.3"/>
+    <circle cx="140" cy="140" r="139" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.1"/>
+  </g>
+
+  <!-- ===== SECOND RING (tilted, behind) ===== -->
+  <g transform="translate(1080, 180) rotate(-35, 80, 80)" opacity="0.75" filter="url(#glow2)">
+    <circle cx="80" cy="80" r="65" fill="none" stroke="url(#ringGrad2)" stroke-width="16"/>
+    <path d="M 25 40 A 60 60 0 0 1 120 25" fill="none" stroke="#F5D060" stroke-width="4" opacity="0.3" stroke-linecap="round"/>
+  </g>
+
+  <!-- ===== SMALL RING (left of big ring) ===== -->
+  <g transform="translate(830, 200)" opacity="0.8">
+    <circle cx="55" cy="55" r="45" fill="none" stroke="url(#ringSmall)" stroke-width="12"/>
+    <path d="M 18 25 A 42 42 0 0 1 80 15" fill="none" stroke="#F5D060" stroke-width="3" opacity="0.3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Gold bar -->
+  <g transform="translate(1260, 240)" opacity="0.85" filter="url(#glow2)">
+    <rect x="0" y="0" width="110" height="55" rx="4" fill="#8B6200"/>
+    <rect x="0" y="0" width="110" height="50" rx="4" fill="#B8860B"/>
+    <rect x="4" y="4" width="102" height="42" rx="3" fill="#D4A017"/>
+    <!-- Top face shine -->
+    <rect x="4" y="4" width="102" height="42" rx="3" fill="url(#ringGrad)" opacity="0.6"/>
+    <!-- Shine highlight -->
+    <rect x="10" y="8" width="40" height="6" rx="2" fill="#fff" opacity="0.15"/>
+    <!-- Text on bar -->
+    <text x="55" y="22" text-anchor="middle" font-family="serif" font-size="10" fill="#8B6200" font-weight="bold" letter-spacing="1">FINE GOLD</text>
+    <text x="55" y="36" text-anchor="middle" font-family="monospace" font-size="8" fill="#8B6200" opacity="0.8">999.9 ‰</text>
+  </g>
+
+  <!-- Second gold bar (rotated) -->
+  <g transform="translate(1310, 285) rotate(-12)" opacity="0.65">
+    <rect x="0" y="0" width="88" height="42" rx="3" fill="#8B6200"/>
+    <rect x="0" y="0" width="88" height="38" rx="3" fill="#C8941F"/>
+    <rect x="3" y="3" width="82" height="32" rx="2" fill="#D4A017"/>
+    <rect x="8" y="6" width="32" height="4" rx="1" fill="#fff" opacity="0.12"/>
+    <text x="44" y="20" text-anchor="middle" font-family="serif" font-size="8" fill="#8B6200" font-weight="bold">Au 999</text>
+  </g>
+
+  <!-- Scattered gemstones -->
+  <g filter="url(#glow2)">
+    <!-- Green gem -->
+    <g transform="translate(870, 130)">
+      <polygon points="12,0 22,8 22,20 12,28 2,20 2,8" fill="#1DB98E" opacity="0.85"/>
+      <polygon points="12,0 22,8 12,12" fill="#5DE8C0" opacity="0.8"/>
+      <polygon points="12,0 2,8 12,12" fill="#0D7A5C" opacity="0.8"/>
+    </g>
+    <!-- Ruby -->
+    <g transform="translate(1200, 150)">
+      <polygon points="10,0 20,8 10,18 0,8" fill="#E0304A" opacity="0.85"/>
+      <polygon points="10,0 20,8 10,10" fill="#FF6B80" opacity="0.7"/>
+      <polygon points="10,0 0,8 10,10" fill="#A01428" opacity="0.8"/>
+    </g>
+    <!-- Teal gem -->
+    <g transform="translate(1380, 100)">
+      <polygon points="12,0 22,10 12,22 2,10" fill="#13B2AD" opacity="0.9"/>
+      <polygon points="12,0 22,10 12,12" fill="#53E2D9" opacity="0.75"/>
+    </g>
+    <!-- Small diamond -->
+    <g transform="translate(1160, 100)">
+      <polygon points="8,0 14,6 8,14 2,6" fill="#D0F0F0" opacity="0.8"/>
+      <polygon points="8,0 14,6 8,8" fill="#fff" opacity="0.6"/>
+    </g>
+  </g>
+
+  <!-- Star sparkles -->
+  <g fill="#D4A017" filter="url(#glow2)">
+    <!-- 6-point star 1 -->
+    <polygon points="1420,70 1422,76 1428,76 1423,80 1425,86 1420,82 1415,86 1417,80 1412,76 1418,76" opacity="0.8"/>
+    <!-- 6-point star 2 -->
+    <polygon points="810,110 811,114 815,114 812,117 813,121 810,118 807,121 808,117 805,114 809,114" opacity="0.6" transform="scale(0.85) translate(140,30)"/>
+    <!-- small dots -->
+    <circle cx="1440" cy="200" r="2" opacity="0.5"/>
+    <circle cx="1430" cy="180" r="1.5" opacity="0.4"/>
+    <circle cx="770" cy="80" r="1.5" opacity="0.4"/>
+    <circle cx="790" cy="330" r="1.5" opacity="0.35"/>
+  </g>
+
+  <!-- Teal accent lines -->
+  <g stroke="#13B2AD" opacity="0.12" stroke-width="1">
+    <line x1="700" y1="0" x2="700" y2="400"/>
+    <line x1="0" y1="350" x2="1442" y2="350"/>
+  </g>
+
+  <!-- Bottom accent bar -->
+  <rect x="0" y="396" width="1442" height="4" fill="#D4A017" opacity="0.3"/>
+  <rect x="0" y="397" width="1442" height="3" fill="#13B2AD" opacity="0.4"/>
+
+  <!-- Left text area fade -->
+  <rect width="860" height="400" fill="url(#leftFade2)"/>
+</svg>
