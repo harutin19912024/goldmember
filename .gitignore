@@ -63,3 +63,13 @@ error_log
 # Upload directories (large user-uploaded files)
 /backend/web/uploads/
 /frontend/web/uploads/
+
+# Playwright local artifacts (audit scripts + screenshots + new ad-hoc tests).
+# The committed suites in /tests/playwright/tests/test_backend_*.py and
+# test_frontend_*.py remain tracked — only new files added after this line
+# stay local. To exclude the entire suite, replace this block with `/tests/playwright/`.
+/tests/playwright/audit_admin.py
+/tests/playwright/audit_screens/
+/tests/playwright/tests/test_auction_flow.py
+/tests/playwright/tests/test_chat_scope_and_limit.py
+/tests/playwright/tests/test_donate_and_users.py
