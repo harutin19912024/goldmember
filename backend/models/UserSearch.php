@@ -41,12 +41,14 @@ class UserSearch extends User
      */
     public function search($params)
     {
-        $query = User::find()->where(['role'=>1]);
-
-        // add conditions that should always apply here
+        // List ALL users by default (admins/brokers/customers). Admin can filter by role
+        // via the role query string param (e.g. ?UserSearch[role]=20 for customers).
+        $query = User::find();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'sort'  => ['defaultOrder' => ['id' => SORT_DESC]],
+            'pagination' => ['pageSize' => 30],
         ]);
 
         $this->load($params);

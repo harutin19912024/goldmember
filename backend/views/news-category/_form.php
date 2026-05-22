@@ -50,7 +50,7 @@ if (!$model->isNewRecord) {
 				    echo 'active';
 				}
 				?>">
-	  			  <a href="#tab_<?php echo $value['id'] ?>"  data-toggle="tab" onclick="editCategoryTr(<?php echo $value['id']; ?>,<?php echo $model->id; ?>,<?php echo $value['is_default']; ?>)" disabled="disabled">
+	  			  <a href="#tab_<?php echo $value['id'] ?>"  data-toggle="tab" onclick="editNewsCategoryTr(<?php echo $value['id']; ?>,<?php echo $model->id; ?>,<?php echo $value['is_default']; ?>)" disabled="disabled">
 	  				<span class="flag-xs flag-<?php echo $value['short_code'] ?>"></span>
 	  			  </a>
 	  		    </li>
@@ -62,7 +62,7 @@ if (!$model->isNewRecord) {
         </div>
         <div class="panel-body"  style="display: block;">
             <div class="tab-content pn br-n admin-form">
-                <div class="tab-pane" id="tr_category"></div>
+                <div class="tab-pane" id="tr_newscategory"></div>
                 <div class="tab-pane active" id="tab_<?php echo $defoultId; ?>">
 			  <?php
 			  $form = ActiveForm::begin([

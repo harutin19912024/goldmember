@@ -114,6 +114,24 @@ function editCategoryTr(lang, category, isdefoult) {
     }
 }
 
+function editNewsCategoryTr(lang, newscategory, isdefoult) {
+    if (isdefoult === 1) {
+        $(".tr-newscategory-form").hide();
+    } else {
+        $.ajax({
+            url: '/' + language + '/tr-news-category/update',
+            method: 'post',
+            data: {lang: lang, newscategory: newscategory},
+            success: function (res) {
+                $(".tab-pane").removeClass('active');
+                $("#tr_newscategory").addClass('active');
+                $('#tr_newscategory').html(res);
+                $('#admin-alerts').hide();
+            }
+        });
+    }
+}
+
 function editAboutTr(lang, aboutus, isdefoult) {
     if (isdefoult === 1) {
         $("#aboutusUpdate").hide();
@@ -198,6 +216,84 @@ function editPartnersTr(lang, partners, isdefoult) {
                 $(".tab-pane").removeClass('active');
                 $("#tr_partners").addClass('active');
                 $('#tr_partners').html(res);
+                $('#admin-alerts').hide();
+            }
+        });
+    }
+}
+
+function editNewsTr(lang, news, isdefoult) {
+    if (isdefoult === 1) {
+        $(".tr-news-form").hide();
+    } else {
+        $.ajax({
+            url: '/' + language + '/tr-news/update',
+            method: 'post',
+            data: {lang: lang, news: news},
+            success: function (res) {
+                $(".tab-pane").removeClass('active');
+                $("#tr_news").addClass('active');
+                $('#tr_news').html(res);
+                if (typeof CKEDITOR !== 'undefined' && document.getElementById('trnews-content')) {
+                    CKEDITOR.replace('trnews-content');
+                }
+                $('#admin-alerts').hide();
+            }
+        });
+    }
+}
+
+function editMaterialTr(lang, material, isdefoult) {
+    if (isdefoult === 1) {
+        $(".tr-material-form").hide();
+    } else {
+        $.ajax({
+            url: '/' + language + '/tr-material/update',
+            method: 'post',
+            data: {lang: lang, material: material},
+            success: function (res) {
+                $(".tab-pane").removeClass('active');
+                $("#tr_material").addClass('active');
+                $('#tr_material').html(res);
+                $('#admin-alerts').hide();
+            }
+        });
+    }
+}
+
+function editHomePageTr(lang, homepage, isdefoult) {
+    if (isdefoult === 1) {
+        $(".tr-homepage-form").hide();
+    } else {
+        $.ajax({
+            url: '/' + language + '/tr-homepage/update',
+            method: 'post',
+            data: {lang: lang, homepage: homepage},
+            success: function (res) {
+                $(".tab-pane").removeClass('active');
+                $("#tr_homepage").addClass('active');
+                $('#tr_homepage').html(res);
+                $('#admin-alerts').hide();
+            }
+        });
+    }
+}
+
+function editPowerOfPennyTr(lang, powerofpenny, isdefoult) {
+    if (isdefoult === 1) {
+        $(".tr-powerofpenny-form").hide();
+    } else {
+        $.ajax({
+            url: '/' + language + '/tr-power-of-penny/update',
+            method: 'post',
+            data: {lang: lang, powerofpenny: powerofpenny},
+            success: function (res) {
+                $(".tab-pane").removeClass('active');
+                $("#tr_powerofpenny").addClass('active');
+                $('#tr_powerofpenny').html(res);
+                if (typeof CKEDITOR !== 'undefined' && document.getElementById('trpowerofpenny-content')) {
+                    CKEDITOR.replace('trpowerofpenny-content');
+                }
                 $('#admin-alerts').hide();
             }
         });

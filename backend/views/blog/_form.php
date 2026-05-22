@@ -23,7 +23,9 @@ if (!$model->isNewRecord) {
 }
 ?>
 
-<div class="blog-form">
+<div class="blog-form admin-form">
+    <?= Html::a(Yii::t('app', 'Back to list'), ['/blog/index'], ['class' => 'btn btn-primary mb15']) ?>
+
     <?php $form = ActiveForm::begin([
         'action' => [$action],
         'id' => $formId,

@@ -8,7 +8,9 @@ use yii\widgets\ActiveForm;
 /* @var $form yii\widgets\ActiveForm */
 ?>
 
-<div class="team-form">
+<div class="team-form admin-form">
+
+    <?= Html::a(Yii::t('app', 'Back to list'), ['/team/index'], ['class' => 'btn btn-primary mb15']) ?>
 
     <?php $form = ActiveForm::begin([
         'id' => 'team-form',

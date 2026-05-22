@@ -2,6 +2,8 @@
 
 namespace backend\controllers;
 
+use Yii;
+
 use backend\models\Donate;
 use backend\models\DonateSearch;
 use backend\models\DonationInfoSearch;

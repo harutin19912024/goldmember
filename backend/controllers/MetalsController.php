@@ -2,6 +2,8 @@
 
 namespace backend\controllers;
 
+use Yii;
+
 use backend\models\Metals;
 use backend\models\MetalsSearch;
 use yii\web\Controller;

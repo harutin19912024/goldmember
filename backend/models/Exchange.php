@@ -53,6 +53,38 @@ class Exchange extends \yii\db\ActiveRecord {
         '250' => 25.0,  // 25.0% pure (6K)
     ];
 
+    const SILVER_PURITIES = [
+        '999' => 99.9,  // Fine silver
+        '958' => 95.8,  // Britannia
+        '925' => 92.5,  // Sterling
+        '900' => 90.0,  // Coin silver
+        '800' => 80.0,
+    ];
+
+    const PLATINUM_PURITIES = [
+        '999' => 99.9,
+        '950' => 95.0,
+        '900' => 90.0,
+        '850' => 85.0,
+    ];
+
+    const PALLADIUM_PURITIES = [
+        '999' => 99.9,
+        '950' => 95.0,
+        '500' => 50.0,
+    ];
+
+    public static function getPuritiesByMetal($metalId)
+    {
+        switch ((int)$metalId) {
+            case 2: return self::SILVER_PURITIES;
+            case 3: return self::PLATINUM_PURITIES;
+            case 4: return self::PALLADIUM_PURITIES;
+            case 1:
+            default: return self::GOLD_PURITIES;
+        }
+    }
+
     /**
      * @inheritdoc
      */

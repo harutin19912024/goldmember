@@ -78,12 +78,17 @@ $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'Home');
 ?>
 <?php
 $responseData = [];
+$price = [];
 $metalPriceApiData = MetalPriceReal::find()
         ->orderBy(['created_date' => SORT_DESC])
         ->one();
     if(!empty($metalPriceApiData) && empty($metalPriceApiData->request_error)) {
-        $price = $metalPriceApiData->request_data;
-        
+        // request_data is stored as a JSON string; decode if needed.
+        $price = is_string($metalPriceApiData->request_data)
+            ? (json_decode($metalPriceApiData->request_data, true) ?: [])
+            : ($metalPriceApiData->request_data ?: []);
+    }
+    if (!empty($price['bid']) && !empty($price['ask'])) {
         $pricePerGram = round($price['bid'] / 31.1035, 4);
         $sell = round($price['ask'] / 31.1035, 4);
         

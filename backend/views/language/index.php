@@ -10,22 +10,33 @@ use yii\grid\GridView;
 $this->title = Yii::t('app', 'Languages');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="language-index">
-
-    <h1><?= Html::encode($this->title) ?></h1>
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-
-    <p>
-        <?php // Html::a(Yii::t('app', 'Create Language'), ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
-    <?= GridView::widget([
-        'dataProvider' => $dataProvider,
-//        'filterModel' => $searchModel,
-        'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
-            'name',
-            'short_code',
-            'is_default',
-        ],
-    ]); ?>
+<div class="table-layout">
+    <div class="tray tray-center">
+        <div class="panel">
+            <div class="panel-body pn">
+                <div class="table table-responsive">
+                    <?= GridView::widget([
+                        'dataProvider' => $dataProvider,
+                        'tableOptions' => [
+                            'class' => 'table admin-form theme-warning tc-checkbox-1 fs13',
+                            'id' => 'tbl_language'
+                        ],
+                        'layout' => "{pager}\n{items}\n{pager}",
+                        'rowOptions' => [
+                            'role' => "row",
+                            'class' => 'odd'
+                        ],
+                        'summary' => true,
+                        'options' => ['class' => 'br-r', 'id' => 'language'],
+                        'columns' => [
+                            ['class' => 'yii\grid\SerialColumn'],
+                            'name',
+                            'short_code',
+                            'is_default',
+                        ],
+                    ]); ?>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

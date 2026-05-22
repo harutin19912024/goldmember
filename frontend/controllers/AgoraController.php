@@ -36,18 +36,8 @@ class AgoraController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        // Validate channel format: must be "auction-{id}"
-        if (!preg_match('/^auction-(\d+)$/', $channel, $m)) {
-            throw new BadRequestHttpException('Invalid channel.');
-        }
+        $auction = $this->resolveAuctionFromChannel($channel);
 
-        $auctionId = (int) $m[1];
-        $auction   = Auction::findOne($auctionId);
-        if (!$auction) {
-            throw new BadRequestHttpException('Auction not found.');
-        }
-
-        // Only allow joining live auctions (or upcoming — token pre-fetch is fine)
         $now = time();
         $end = $auction->end_date ? strtotime($auction->end_date) : null;
         if ($end && $now > $end) {
@@ -58,7 +48,6 @@ class AgoraController extends Controller
         $appId   = Yii::$app->params['agoraAppId'];
         $appCert = Yii::$app->params['agoraAppCertificate'];
 
-        // Use the authenticated user's ID as UID (avoids collisions, enables identification)
         $uid        = (int) Yii::$app->user->id;
         $expireTime = time() + 3600;
 
@@ -72,11 +61,46 @@ class AgoraController extends Controller
         );
 
         return [
-            'token'   => $token,
-            'uid'     => $uid,
-            'appid'   => $appId,
-            'channel' => $channel,
-            'role'    => 'audience',
+            'token'    => $token,
+            'uid'      => $uid,
+            'appid'    => $appId,
+            'channel'  => $channel,
+            'role'     => 'audience',
+            'host'     => $this->describeHost($auction),
         ];
+    }
+
+    /**
+     * Returns the auction's host (uid + display name) so the audience UI can
+     * label the publisher correctly and show "waiting for host" before the
+     * stream starts.
+     */
+    public function actionHostInfo($channel)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $auction = $this->resolveAuctionFromChannel($channel);
+        return $this->describeHost($auction);
+    }
+
+    private function resolveAuctionFromChannel(string $channel): Auction
+    {
+        if (!preg_match('/^auction-(\d+)$/', $channel, $m)) {
+            throw new BadRequestHttpException('Invalid channel.');
+        }
+        $auction = Auction::findOne((int)$m[1]);
+        if (!$auction) {
+            throw new BadRequestHttpException('Auction not found.');
+        }
+        return $auction;
+    }
+
+    private function describeHost(Auction $auction): array
+    {
+        $hostUid  = (int)($auction->user_id ?: 0);
+        $hostName = 'Host';
+        if ($auction->user) {
+            $hostName = $auction->user->username ?: ('User #' . $hostUid);
+        }
+        return ['uid' => $hostUid, 'name' => $hostName];
     }
 }

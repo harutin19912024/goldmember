@@ -40,6 +40,10 @@ phpunit.phar
 /backend/config/params-local.php
 /common/config/params-local.php
 
+# Local environment variables (CHATBOT_API_KEY etc.). Keep .env.example committed.
+/.env
+/.env.local
+
 # Large or generated asset files
 /frontend/web/assets/
 /backend/web/assets/

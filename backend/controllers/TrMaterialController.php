@@ -2,6 +2,8 @@
 
 namespace backend\controllers;
 
+use Yii;
+use backend\models\Material;
 use backend\models\TrMaterial;
 use backend\models\TrMaterialSearch;
 use yii\web\Controller;
@@ -89,17 +91,36 @@ class TrMaterialController extends Controller
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionUpdate($id)
+    public function actionUpdate()
     {
-        $model = $this->findModel($id);
-
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if (isset(Yii::$app->request->post()['TrMaterial'])) {
+            $arrPost = Yii::$app->request->post()['TrMaterial'];
+            $trModel = TrMaterial::findOne(['language_id' => $arrPost['language_id'], 'material_id' => $arrPost['material_id']]);
+            if (!$trModel) {
+                $trModel = new TrMaterial();
+                $trModel->language_id = $arrPost['language_id'];
+                $trModel->material_id = $arrPost['material_id'];
+            }
+            $trModel->name = $arrPost['name'] ?? null;
+            $trModel->short_description = $arrPost['short_description'] ?? null;
+            $trModel->description = $arrPost['description'] ?? null;
+            echo $trModel->save() ? 'true' : 'false';
+            exit();
+        } elseif (!empty(Yii::$app->request->post()) && Yii::$app->request->isAjax) {
+            $arrPost = Yii::$app->request->post();
+            $tr = TrMaterial::findOne(['language_id' => $arrPost['lang'], 'material_id' => $arrPost['material']]);
+            if (!$tr) {
+                $tr = new TrMaterial();
+                $tr->language_id = $arrPost['lang'];
+                $tr->material_id = $arrPost['material'];
+                $material = Material::findOne($arrPost['material']);
+                if ($material) {
+                    $tr->name = $material->name;
+                }
+            }
+            echo $this->renderPartial('_form', ['model' => $tr]);
+            exit();
         }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
     }
 
     /**

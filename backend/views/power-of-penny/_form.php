@@ -52,7 +52,7 @@ $defoultId = 1;
                         }
                         ?>">
                             <a href="#tab_<?php echo $value['id'] ?>" data-toggle="tab"
-                               onclick="editNewsTr(<?php echo $value['id']; ?>,<?php echo $model->id; ?>,<?php echo $value['is_default']; ?>)"
+                               onclick="editPowerOfPennyTr(<?php echo $value['id']; ?>,<?php echo $model->id; ?>,<?php echo $value['is_default']; ?>)"
                                disabled="disabled">
                                 <span class="flag-xs flag-<?php echo $value['short_code'] ?>"></span>
                             </a>
@@ -65,7 +65,7 @@ $defoultId = 1;
         </div>
         <div class="panel-body" style="display: block;">
             <div class="tab-content pn br-n admin-form">
-                <div class="tab-pane" id="tr_news"></div>
+                <div class="tab-pane" id="tr_powerofpenny"></div>
 
                 <div class="tab-pane active" id="tab_<?php echo $defoultId; ?>">
                     <?php

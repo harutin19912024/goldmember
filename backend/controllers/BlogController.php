@@ -27,7 +27,7 @@ class BlogController extends Controller
                 'actions' => [
                     'index' => ['GET', 'POST'],
                     'view' => ['GET'],
-                    'create' => ['POST'],
+                    'create' => ['GET', 'POST'],
                     'update' => ['GET', 'POST'],
                     'delete' => ['POST'],
                 ],
@@ -104,7 +104,7 @@ class BlogController extends Controller
         $model = new Blog();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            return $this->redirect(['update', 'id' => $model->id]);
         } else {
             return $this->render('create', [
                 'model' => $model,

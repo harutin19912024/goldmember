@@ -1,16 +1,35 @@
 // Channel is set by the page before this script runs via window.AGORA_CHANNEL
 const channelName = window.AGORA_CHANNEL || 'default-room';
 let agoraClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
+let hostInfo = { uid: null, name: 'Host' };
+let hostIsPublishing = false;
 
-function addUserParticipant(uid, label) {
+function setRemoteMessage(html) {
+    const container = document.getElementById('remote-player');
+    if (container) container.innerHTML = html;
+}
+
+function setStreamStatus(text) {
+    const el = document.getElementById('stream-status');
+    if (el) el.textContent = text;
+}
+
+function addUserParticipant(uid, label, isHost) {
     const container = document.getElementById('user-participants');
-    if (!container || document.getElementById('user-participant-' + uid)) return;
-
-    const div = document.createElement('div');
-    div.id = 'user-participant-' + uid;
-    div.style.cssText = 'display:flex;align-items:center;padding:6px 10px;margin-bottom:6px;background:#eef;border:1px solid #ccd;border-radius:4px;font-size:13px;';
-    div.innerHTML = '<i class="bi bi-person-fill me-2"></i>' + label + ' <span class="text-muted ms-1">(#' + uid + ')</span>';
-    container.appendChild(div);
+    if (!container) return;
+    const id = 'user-participant-' + uid;
+    let div = document.getElementById(id);
+    if (!div) {
+        div = document.createElement('div');
+        div.id = id;
+        container.appendChild(div);
+    }
+    div.style.cssText = 'display:flex;align-items:center;padding:6px 10px;margin-bottom:6px;'
+        + 'background:' + (isHost ? '#fff5e6' : '#eef')
+        + ';border:1px solid ' + (isHost ? '#f0ad4e' : '#ccd')
+        + ';border-radius:4px;font-size:13px;';
+    const icon = isHost ? '<i class="bi bi-mic-fill me-2 text-warning"></i>' : '<i class="bi bi-person-fill me-2"></i>';
+    div.innerHTML = icon + label + ' <span class="text-muted ms-1">(#' + uid + ')</span>';
 }
 
 function removeUserParticipant(uid) {
@@ -18,29 +37,37 @@ function removeUserParticipant(uid) {
     if (el) el.remove();
 }
 
+function labelFor(uid) {
+    if (uid === hostInfo.uid) return { text: hostInfo.name + ' (Host)', isHost: true };
+    if (uid === window.AGORA_OWN_UID) return { text: 'You', isHost: false };
+    return { text: 'Viewer', isHost: false };
+}
+
 async function joinVideo() {
-    const joinBtn = document.getElementById('btn-join-stream');
+    const joinBtn  = document.getElementById('btn-join-stream');
     const leaveBtn = document.getElementById('btn-leave-stream');
-    const statusEl = document.getElementById('stream-status');
 
     if (joinBtn) joinBtn.disabled = true;
-    if (statusEl) statusEl.textContent = 'Connecting...';
+    setStreamStatus('Connecting...');
 
     try {
-        const res = await fetch('/agora/get-token?channel=' + channelName);
+        const res  = await fetch('/agora/get-token?channel=' + encodeURIComponent(channelName));
         const data = await res.json();
+        if (data && data.host) hostInfo = data.host;
+        window.AGORA_OWN_UID = data.uid;
 
         await agoraClient.setClientRole('audience');
         await agoraClient.join(data.appid, data.channel, data.token, data.uid);
 
-        addUserParticipant(data.uid, 'You');
-
-        if (statusEl) statusEl.textContent = 'Live';
-        if (joinBtn) joinBtn.style.display = 'none';
+        addUserParticipant(data.uid, 'You', false);
+        setRemoteMessage('<p class="text-muted text-center py-5"><i class="bi bi-hourglass-split"></i> Waiting for <strong>' + hostInfo.name + '</strong> to start the stream…</p>');
+        setStreamStatus('Connected — waiting for host');
+        if (joinBtn)  joinBtn.style.display  = 'none';
         if (leaveBtn) leaveBtn.style.display = '';
 
         agoraClient.on('user-joined', (user) => {
-            addUserParticipant(user.uid, 'Viewer');
+            const lbl = labelFor(user.uid);
+            addUserParticipant(user.uid, lbl.text, lbl.isHost);
         });
 
         agoraClient.on('user-published', async (user, mediaType) => {
@@ -48,29 +75,40 @@ async function joinVideo() {
             if (mediaType === 'video') {
                 playMainVideo(user);
                 createThumbnail(user);
+                hostIsPublishing = true;
+                setStreamStatus('Live');
             }
             if (mediaType === 'audio') {
                 user.audioTrack.play();
             }
-            addUserParticipant(user.uid, 'Host');
+            // Re-render label now that we know this user is publishing — almost certainly the host.
+            const lbl = labelFor(user.uid);
+            addUserParticipant(user.uid, lbl.text, lbl.isHost || mediaType === 'video');
         });
 
         agoraClient.on('user-left', (user) => {
             removeUserParticipant(user.uid);
             const thumb = document.getElementById('thumb-' + user.uid);
             if (thumb) thumb.remove();
+            if (user.uid === hostInfo.uid) {
+                hostIsPublishing = false;
+                setRemoteMessage('<p class="text-muted text-center py-5"><i class="bi bi-slash-circle"></i> ' + hostInfo.name + ' has left. The stream has ended.</p>');
+                setStreamStatus('Host left');
+            }
         });
 
         agoraClient.on('user-unpublished', (user, mediaType) => {
-            if (mediaType === 'video') {
-                const container = document.getElementById('remote-player');
-                if (container) container.innerHTML = '<p class="text-muted text-center py-5">Host paused the stream.</p>';
+            if (mediaType === 'video' && user.uid === hostInfo.uid) {
+                hostIsPublishing = false;
+                setRemoteMessage('<p class="text-muted text-center py-5"><i class="bi bi-pause-circle"></i> ' + hostInfo.name + ' paused the stream.</p>');
+                setStreamStatus('Paused by host');
             }
         });
 
     } catch (err) {
         console.error('[AGORA] join error:', err);
-        if (statusEl) statusEl.textContent = 'Connection failed';
+        setStreamStatus('Connection failed');
+        setRemoteMessage('<p class="text-danger text-center py-5">Unable to connect to the live stream.</p>');
         if (joinBtn) joinBtn.disabled = false;
     }
 }
@@ -78,25 +116,21 @@ async function joinVideo() {
 async function leaveVideo() {
     await agoraClient.leave();
 
-    const container = document.getElementById('remote-player');
-    if (container) container.innerHTML = '<p class="text-muted text-center py-5">You have left the stream.</p>';
-
+    setRemoteMessage('<p class="text-muted text-center py-5">You have left the stream.</p>');
     const participants = document.getElementById('user-participants');
     if (participants) participants.innerHTML = '';
 
-    const joinBtn = document.getElementById('btn-join-stream');
+    const joinBtn  = document.getElementById('btn-join-stream');
     const leaveBtn = document.getElementById('btn-leave-stream');
-    const statusEl = document.getElementById('stream-status');
-
-    if (joinBtn) { joinBtn.disabled = false; joinBtn.style.display = ''; }
+    if (joinBtn)  { joinBtn.disabled = false; joinBtn.style.display = ''; }
     if (leaveBtn) leaveBtn.style.display = 'none';
-    if (statusEl) statusEl.textContent = 'Offline';
+    setStreamStatus('Offline');
+    hostIsPublishing = false;
 }
 
 function createThumbnail(user) {
     const list = document.getElementById('user-participants');
     if (!list) return;
-
     const existing = document.getElementById('thumb-' + user.uid);
     if (existing) existing.remove();
 
@@ -109,25 +143,20 @@ function createThumbnail(user) {
     videoEl.playsInline = true;
     videoEl.muted = true;
     videoEl.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-
     thumbContainer.appendChild(videoEl);
     list.appendChild(thumbContainer);
-
     user.videoTrack.play(videoEl);
 }
 
 function playMainVideo(user) {
     const container = document.getElementById('remote-player');
     if (!container) return;
-
     container.innerHTML = '';
-
     const video = document.createElement('video');
     video.autoplay = true;
     video.playsInline = true;
     video.muted = false;
     video.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-
     container.appendChild(video);
     user.videoTrack.play(video);
 }

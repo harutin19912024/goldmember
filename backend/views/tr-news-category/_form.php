@@ -4,14 +4,15 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /** @var yii\web\View $this */
-/** @var backend\models\TrPowerOfPenny $model */
+/** @var backend\models\TrNewsCategory $model */
+
 ?>
 
-<div class="tr-powerofpenny-form">
+<div class="tr-newscategory-form">
 
     <?php $form = ActiveForm::begin([
-        'action' => ['/tr-power-of-penny/update'],
-        'id' => 'trpowerofpennyupdate',
+        'action' => ['/tr-news-category/update'],
+        'id' => 'trnewscategoryupdate',
     ]); ?>
 
     <div class="clearfix"></div>
@@ -20,11 +21,17 @@ use yii\widgets\ActiveForm;
             <?= $form->field($model, 'name')->textInput(['maxlength' => true])->label(false) ?>
         </div>
         <div class="col-md-12">
-            <?= $form->field($model, 'content')->textarea(['rows' => 6, 'id' => 'trpowerofpenny-content'])->label(false) ?>
+            <?= $form->field($model, 'short_description')->textInput(['maxlength' => true])->label(false) ?>
+        </div>
+        <div class="col-md-12">
+            <?= $form->field($model, 'description')->textarea(['rows' => 6])->label(false) ?>
+        </div>
+        <div class="col-md-12">
+            <?= $form->field($model, 'route_name')->textInput(['maxlength' => true])->label(false) ?>
         </div>
 
         <?= $form->field($model, 'language_id')->hiddenInput()->label(false) ?>
-        <?= $form->field($model, 'power_of_penny_id')->hiddenInput()->label(false) ?>
+        <?= $form->field($model, 'category_id')->hiddenInput()->label(false) ?>
 
         <div class="col-md-6">
             <?= Html::submitButton($model->isNewRecord ? Yii::t('app', 'Create') : Yii::t('app', 'Update'),

@@ -165,8 +165,12 @@ $statusLabel = [
                         </div>
                     <?php else: ?>
                         <!-- Agora live stream -->
-                        <div id="remote-player" style="width:100%;height:380px;background:#111;display:flex;align-items:center;justify-content:center;">
-                            <p class="text-muted">Click <strong>Join Stream</strong> to watch live.</p>
+                        <div id="remote-player" style="width:100%;height:380px;background:#111;color:#bbb;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;">
+                            <p class="mb-0">
+                                <i class="bi bi-broadcast" style="font-size:2rem; display:block; margin-bottom:8px;"></i>
+                                <strong>Click "Join Stream"</strong> to connect.<br>
+                                <span class="small">If the host has already started, you'll see the live video right away.</span>
+                            </p>
                         </div>
 
                         <div class="p-3 d-flex gap-2 align-items-center border-top">

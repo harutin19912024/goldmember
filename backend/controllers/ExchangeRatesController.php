@@ -2,6 +2,8 @@
 
 namespace backend\controllers;
 
+use Yii;
+
 use backend\models\ExchangeRates;
 use backend\models\Currencies;
 use backend\models\ExchangeRatesSearch;

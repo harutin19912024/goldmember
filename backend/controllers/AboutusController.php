@@ -114,7 +114,7 @@ class AboutusController extends Controller {
                 $trmodel->language_id = $value['id'];
                 $trmodel->save();
             }
-            return $this->redirect('index');
+            return $this->redirect(['update', 'id' => $model->id]);
         } else {
             $defaultLanguage = Language::find()->where(['is_default' => 1])->one();
             $modelFiles = new Files();

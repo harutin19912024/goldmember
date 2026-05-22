@@ -10,6 +10,13 @@ use common\models\Language;
 /* @var $form yii\widgets\ActiveForm */
 
 $languages = Language::find()->asArray()->all();
+$defoultId = 0;
+foreach ($languages as $lng) {
+    if (!empty($lng['is_default'])) {
+        $defoultId = $lng['id'];
+        break;
+    }
+}
 if (!$model->isNewRecord) {
     $formId = 'homepageUpdate';
     $action = '/homepage/update?id=' . $model->id;

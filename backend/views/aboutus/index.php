@@ -1,4 +1,3 @@
-
 <?php
 
 use yii\helpers\Html;
@@ -12,64 +11,46 @@ $this->title = Yii::t('app', 'About');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="table-layout">
-    <div class="tray tray-center filter">
+    <div class="tray tray-center">
+        <!-- recent orders table -->
         <div class="panel">
             <div class="panel-body pn">
-                <div class="table-responsive">
-                    <?=
-                    GridView::widget([
+                <div class="table table-responsive">
+                    <?= GridView::widget([
                         'dataProvider' => $dataProvider,
-//                        'filterModel' => $searchModel,
                         'tableOptions' => [
-                            'class' => 'table table-striped admin-form table-hover display dataTable no-footer',
-                            'id' => 'tbl_attr'
+                            'class' => 'table admin-form theme-warning tc-checkbox-1 fs13',
+                            'id' => 'tbl_aboutus'
                         ],
-                        'filterRowOptions' => [
-                            'role' => "row",
-                        ],
+                        'layout' => "{pager}\n{items}\n{pager}",
                         'rowOptions' => [
                             'role' => "row",
                             'class' => 'odd'
                         ],
-                        'summary' => false,
-                        'options' => ['class' => 'br-r', 'id' => 'product'],
+                        'summary' => true,
+                        'options' => ['class' => 'br-r', 'id' => 'aboutus'],
                         'columns' => [
-                            [
-                                'attribute' => 'title',
-                                'filterInputOptions' => [
-                                    'class' => 'form-control',
-                                    'placeholder' => 'Search'
-                                ],
-                            ],
-                            [
-                                'attribute' => 'short_description', 'format' => 'html',
-                            ],
+                            ['attribute' => 'title'],
+                            ['attribute' => 'short_description', 'format' => 'html'],
                             ['class' => 'yii\grid\ActionColumn',
                                 'template' => '{update}',
+                                'contentOptions' => ['style' => 'white-space: normal;'],
+                                'headerOptions' => ['style' => 'width: 9%;'],
                                 'buttons' => [
                                     'update' => function ($url, $model) {
-                                        return Html::a('<span class="glyphicon glyphicon-pencil"></span> Edit', $url, [
-                                                    'title' => Yii::t('app', 'Update'),
-                                                    'aria-label' => Yii::t('app', 'Update'),
-                                                    //'data-confirm' =>Yii::t('app', 'Are you sure! You whant delete this item?'),
-                                                    //'data-method' =>'post',
-                                                    //'data-pjax' => '0',
-                                                    'data-key' => $model->id,
-                                                    'class' => 'btn btn-info btn-xs fs12 br2 ml5 pull-right'
+                                        return Html::a('<span class="glyphicon glyphicon-edit"></span>' . Yii::t('app', 'Edit'), $url, [
+                                            'title' => Yii::t('app', 'Edit'),
+                                            'aria-label' => 'Edit',
+                                            'data-key' => $model->id,
+                                            'class' => 'btn btn-info btn-xs fs12 br2 ml5'
                                         ]);
-                                    }
+                                    },
                                 ]
                             ],
                         ],
-                    ]);
-                    ?>
+                    ]); ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-
-
-
-

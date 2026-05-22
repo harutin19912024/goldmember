@@ -5,25 +5,34 @@ use yii\widgets\ActiveForm;
 
 /** @var yii\web\View $this */
 /** @var backend\models\TrMaterial $model */
-/** @var yii\widgets\ActiveForm $form */
 ?>
 
 <div class="tr-material-form">
 
-    <?php $form = ActiveForm::begin(); ?>
+    <?php $form = ActiveForm::begin([
+        'action' => ['/tr-material/update'],
+        'id' => 'trmaterialupdate',
+    ]); ?>
 
-    <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'short_description')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
-
-    <?= $form->field($model, 'material_id')->textInput() ?>
-
-    <?= $form->field($model, 'language_id')->textInput() ?>
-
+    <div class="clearfix"></div>
     <div class="form-group">
-        <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>
+        <div class="col-md-12">
+            <?= $form->field($model, 'name')->textInput(['maxlength' => true])->label(false) ?>
+        </div>
+        <div class="col-md-12">
+            <?= $form->field($model, 'short_description')->textInput(['maxlength' => true])->label(false) ?>
+        </div>
+        <div class="col-md-12">
+            <?= $form->field($model, 'description')->textarea(['rows' => 6])->label(false) ?>
+        </div>
+
+        <?= $form->field($model, 'language_id')->hiddenInput()->label(false) ?>
+        <?= $form->field($model, 'material_id')->hiddenInput()->label(false) ?>
+
+        <div class="col-md-6">
+            <?= Html::submitButton($model->isNewRecord ? Yii::t('app', 'Create') : Yii::t('app', 'Update'),
+                ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary', 'type' => 'button']) ?>
+        </div>
     </div>
 
     <?php ActiveForm::end(); ?>

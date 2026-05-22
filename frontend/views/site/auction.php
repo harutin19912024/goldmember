@@ -108,7 +108,8 @@ $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'Auction');
                                     data-fav-id="<?= $product->id ?>"
                                     aria-label="Toggle Favourite"
                                     title="<?= $isFaved ? Yii::t('app', 'Remove from favourites') : Yii::t('app', 'Add to favourites') ?>"
-                                    class="bg-white-color button icon-button position-absolute zindex-offcanvas-backdrop<?= $isFaved ? ' faved' : '' ?>">
+                                    style="top:8px; left:8px; right:auto;"
+                                    class="bg-white-color button icon-button position-absolute top-0 start-0 m-2 zindex-offcanvas-backdrop<?= $isFaved ? ' faved' : '' ?>">
                                 <i class="bi <?= $isFaved ? 'bi-heart-fill' : 'bi-heart' ?>"></i>
                             </button>
                         </div>

@@ -360,7 +360,7 @@ $this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END,
                 <li class="mr-2">
                     <a href="/<?=Yii::$app->language?>/<?php if(Yii::$app->user->isGuest):?>login<?php else:?>user/profile<?php endif;?>" class="user-link bg-white-color d-flex">
                         <i class="bi bi-person"></i>
-                        <span><?php if(Yii::$app->user->isGuest):?><?=Yii::t('app','Login')?><?php else:?><?=Yii::t('app','Welcome')?>, <?= Yii::$app->user->identity->customer->name ?><?php endif;?></span>
+                        <span><?php if(Yii::$app->user->isGuest):?><?=Yii::t('app','Login')?><?php else: $_u = Yii::$app->user->identity; $_dn = $_u->customer ? $_u->customer->name : $_u->username; ?><?=Yii::t('app','Welcome')?>, <?= $_dn ?><?php endif;?></span>
                     </a>
                 </li>
                 <?php if(!Yii::$app->user->isGuest):?>
@@ -511,3 +511,4 @@ $this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END,
 </body>
 </html>
 <?php $this->endPage() ?>
+

@@ -2,6 +2,8 @@
 
 namespace backend\controllers;
 
+use Yii;
+
 use backend\models\UserActivity;
 use backend\models\UserActivitySearch;
 use yii\web\Controller;

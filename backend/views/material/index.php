@@ -3,7 +3,6 @@
 use backend\models\Material;
 use yii\helpers\Html;
 use yii\helpers\Url;
-use yii\grid\ActionColumn;
 use yii\grid\GridView;
 
 /** @var yii\web\View $this */
@@ -13,35 +12,80 @@ use yii\grid\GridView;
 $this->title = Yii::t('app', 'Materials');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="material-index">
+<div class="table-layout">
+    <div class="tray tray-center">
 
-    <h1><?= Html::encode($this->title) ?></h1>
+        <div class="row">
+            <div id="material-form_cont" class="col-lg-2 col-sm-3">
+                <?= Html::a('<span class="fa fa-plus pr5"></span> ' . Yii::t('app', 'Create Material'), ['/material/create'], ['class' => 'btn btn-system mb15']) ?>
+            </div>
+        </div>
 
-    <p>
-        <?= Html::a(Yii::t('app', 'Create Material'), ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
-
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-
-    <?= GridView::widget([
-        'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
-        'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
-
-            'id',
-            'name',
-            'short_description',
-            'description:ntext',
-            'path',
-            [
-                'class' => ActionColumn::className(),
-                'urlCreator' => function ($action, Material $model, $key, $index, $column) {
-                    return Url::toRoute([$action, 'id' => $model->id]);
-                 }
-            ],
-        ],
-    ]); ?>
-
-
+        <div class="panel">
+            <div class="panel-body pn">
+                <div class="table table-responsive">
+                    <?= GridView::widget([
+                        'dataProvider' => $dataProvider,
+                        'tableOptions' => [
+                            'class' => 'table admin-form theme-warning tc-checkbox-1 fs13',
+                            'id' => 'tbl_material'
+                        ],
+                        'layout' => "{pager}\n{items}\n{pager}",
+                        'rowOptions' => [
+                            'role' => 'row',
+                            'class' => 'odd'
+                        ],
+                        'summary' => true,
+                        'options' => ['class' => 'br-r', 'id' => 'material'],
+                        'columns' => [
+                            'id',
+                            'name',
+                            'short_description',
+                            'description:ntext',
+                            [
+                                'attribute' => 'path',
+                                'format' => 'html',
+                                'value' => function ($model) {
+                                    if (!empty($model->path)) {
+                                        return Html::img('/' . ltrim($model->path, '/'), ['style' => 'width: 40px !important']);
+                                    }
+                                    return '';
+                                },
+                            ],
+                            [
+                                'class' => 'yii\grid\ActionColumn',
+                                'template' => '{update}{delete}',
+                                'contentOptions' => ['style' => 'white-space: normal;'],
+                                'headerOptions' => ['style' => 'width: 9%;'],
+                                'urlCreator' => function ($action, Material $model, $key, $index, $column) {
+                                    return Url::toRoute([$action, 'id' => $model->id]);
+                                },
+                                'buttons' => [
+                                    'update' => function ($url, $model) {
+                                        return Html::a('<span class="glyphicon glyphicon-edit"></span>' . Yii::t('app', 'Edit'), $url, [
+                                            'title' => Yii::t('app', 'Edit'),
+                                            'aria-label' => 'Edit',
+                                            'data-key' => $model->id,
+                                            'class' => 'btn btn-info btn-xs fs12 br2 ml5'
+                                        ]);
+                                    },
+                                    'delete' => function ($url, $model) {
+                                        return Html::a('<span class="glyphicon glyphicon-trash"></span>' . Yii::t('app', 'Delete'), $url, [
+                                            'title' => Yii::t('app', 'Delete'),
+                                            'aria-label' => Yii::t('app', 'Delete'),
+                                            'data-confirm' => 'Are you sure! You whant delete this item?',
+                                            'data-method' => 'post',
+                                            'data-pjax' => '0',
+                                            'data-key' => $model->id,
+                                            'class' => 'btn btn-danger btn-xs fs12 br2 ml5'
+                                        ]);
+                                    },
+                                ]
+                            ],
+                        ],
+                    ]); ?>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

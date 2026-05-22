@@ -2,6 +2,8 @@
 
 namespace backend\controllers;
 
+use Yii;
+
 use backend\models\Currencies;
 use backend\models\CurrenciesSearch;
 use yii\web\Controller;

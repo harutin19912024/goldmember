@@ -2,6 +2,8 @@
 
 namespace backend\controllers;
 
+use Yii;
+
 use backend\models\Partners;
 use backend\models\PartnersSearch;
 use yii\web\Controller;
@@ -71,7 +73,7 @@ class PartnersController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+                return $this->redirect(['update', 'id' => $model->id]);
             }
         } else {
             $model->loadDefaultValues();

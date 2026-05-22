@@ -2,6 +2,8 @@
 
 namespace backend\controllers;
 
+use Yii;
+use backend\models\PowerOfPenny;
 use backend\models\TrPowerOfPenny;
 use backend\models\TrPowerOfPennySearch;
 use yii\web\Controller;
@@ -89,17 +91,36 @@ class TrPowerOfPennyController extends Controller
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionUpdate($id)
+    public function actionUpdate()
     {
-        $model = $this->findModel($id);
-
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if (isset(Yii::$app->request->post()['TrPowerOfPenny'])) {
+            $arrPost = Yii::$app->request->post()['TrPowerOfPenny'];
+            $trModel = TrPowerOfPenny::findOne(['language_id' => $arrPost['language_id'], 'power_of_penny_id' => $arrPost['power_of_penny_id']]);
+            if (!$trModel) {
+                $trModel = new TrPowerOfPenny();
+                $trModel->language_id = $arrPost['language_id'];
+                $trModel->power_of_penny_id = $arrPost['power_of_penny_id'];
+            }
+            $trModel->name = $arrPost['name'] ?? null;
+            $trModel->content = $arrPost['content'] ?? null;
+            echo $trModel->save() ? 'true' : 'false';
+            exit();
+        } elseif (!empty(Yii::$app->request->post()) && Yii::$app->request->isAjax) {
+            $arrPost = Yii::$app->request->post();
+            $tr = TrPowerOfPenny::findOne(['language_id' => $arrPost['lang'], 'power_of_penny_id' => $arrPost['powerofpenny']]);
+            if (!$tr) {
+                $tr = new TrPowerOfPenny();
+                $tr->language_id = $arrPost['lang'];
+                $tr->power_of_penny_id = $arrPost['powerofpenny'];
+                $pop = PowerOfPenny::findOne($arrPost['powerofpenny']);
+                if ($pop) {
+                    $tr->name = $pop->name ?? null;
+                    $tr->content = $pop->content ?? null;
+                }
+            }
+            echo $this->renderPartial('_form', ['model' => $tr]);
+            exit();
         }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
     }
 
     /**

@@ -277,6 +277,11 @@ $action = '/message-system/create';
                         <?= Html::a('<span class="glyphicon glyphicon-globe"></span>
                         <span class="sidebar-title">' . Yii::t('app', 'Active Users') . '</span>', Url::to(['user-activity/index'])) ?>
                 </li>
+
+                <li class="menu-link <?php if (strpos($currentUrl, '/user/') !== false || $currentUrl == '/user/index'): ?>active<?php endif ?>">
+                        <?= Html::a('<span class="glyphicon glyphicon-user"></span>
+                        <span class="sidebar-title">' . Yii::t('app', 'Users Management') . '</span>', Url::to(['/user/index'])) ?>
+                </li>
                     
                 <li>
                     <a class="accordion-toggle <?php if (strpos($currentUrl, 'product') !== false ||

@@ -60,7 +60,7 @@ $images = Files::find()->where(['category_id' => $pageData->id, 'category' => 'p
 
 
 <!-- End Page Title -->
-<div class="container" style="margin-top: 60px;">
+<div class="container" style="margin-top: 60px; padding-bottom: 100px;">
    <div class="row">
         <div class="col-lg-12">
             <div class="bg-light donation-form rounded-3 shadow-sm">
@@ -102,9 +102,10 @@ $images = Files::find()->where(['category_id' => $pageData->id, 'category' => 'p
                     </div>
                   </div>
                 <div class="form-group mb-3">
-                    <label for="message" class="form-label fw-bold"><?=Yii::t('app', 'Message (optional)')?></label>
-                    <textarea id="message" name="message" class="form-control" rows="4"></textarea>
-                  </div>
+                    <?= $form->field($model, 'message', ['template' => '{label}{input}{error}'])
+                        ->textarea(['rows' => 4, 'class' => 'form-control'])
+                        ->label(Yii::t('app', 'Message (optional)'), ['class' => 'form-label fw-bold']) ?>
+                </div>
                 <div class="form-group text-center">
                     <?= Html::submitButton(Yii::t('app', 'Donate'), ['class' => 'btn btn-lg button primary-button donate-button', 'name' => 'donate-button']) ?>
                 </div>

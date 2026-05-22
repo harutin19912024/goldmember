@@ -73,8 +73,14 @@ class AuctionController extends Controller
         $model = new Auction();
 
         if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+            if ($model->load($this->request->post())) {
+                if (empty($model->user_id) && !Yii::$app->user->isGuest) {
+                    $model->user_id = Yii::$app->user->id;
+                }
+                if ($model->save()) {
+                    Yii::$app->session->setFlash('success', Yii::t('app', 'Auction created. Lot number: ') . $model->lot_number);
+                    return $this->redirect(['update', 'id' => $model->id]);
+                }
             }
         } else {
             $model->loadDefaultValues();
@@ -109,32 +115,45 @@ class AuctionController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $appId = Yii::$app->params['agoraAppId'];
+        if (Yii::$app->user->isGuest) {
+            Yii::$app->response->statusCode = 401;
+            return ['error' => 'Authentication required.'];
+        }
+        if (!preg_match('/^auction-(\d+)$/', $channel, $m)) {
+            Yii::$app->response->statusCode = 400;
+            return ['error' => 'Invalid channel.'];
+        }
+        $auction = Auction::findOne((int)$m[1]);
+        if (!$auction) {
+            Yii::$app->response->statusCode = 404;
+            return ['error' => 'Auction not found.'];
+        }
+        // Only the admin who created the auction (or any admin role=0) may host.
+        $currentUser = Yii::$app->user->identity;
+        if ((int)$currentUser->role !== 0) {
+            Yii::$app->response->statusCode = 403;
+            return ['error' => 'Only an admin may host the stream.'];
+        }
+
+        $appId   = Yii::$app->params['agoraAppId'];
         $appCert = Yii::$app->params['agoraAppCertificate'];
-    
-        // Admin UID should be stable, best is user ID
-        $uid = Yii::$app->user->id;
-    
-        $expireTime = time() + 3600;
-    
-        // Host publishes video/audio
-        $rtcRole = RtcTokenBuilder2::ROLE_PUBLISHER;
-    
+        $uid     = (int)Yii::$app->user->id;
+
         $token = RtcTokenBuilder2::buildTokenWithUid(
             $appId,
             $appCert,
             $channel,
             $uid,
-            $rtcRole,
-            $expireTime
+            RtcTokenBuilder2::ROLE_PUBLISHER,
+            time() + 3600
         );
-    
+
         return [
-            'token' => $token,
-            'uid' => $uid,
-            'appid' => $appId,
+            'token'   => $token,
+            'uid'     => $uid,
+            'appid'   => $appId,
             'channel' => $channel,
-            'role' => 'host'
+            'role'    => 'host',
         ];
     }
 

@@ -100,7 +100,7 @@ class SliderController extends Controller {
             }
 			$model->save();
             Yii::$app->session->setFlash('success', Yii::t('app','Slider successfully created'));
-            return $this->redirect("index");
+            return $this->redirect(['update', 'id' => $model->id]);
         } else {
             return $this->render('create', [
                         'model' => $model,
