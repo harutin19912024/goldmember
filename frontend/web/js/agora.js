@@ -16,22 +16,105 @@ function setStreamStatus(text) {
     if (el) el.textContent = text;
 }
 
-function addUserParticipant(uid, label, isHost) {
-    const container = document.getElementById('user-participants');
-    if (!container) return;
-    const id = 'user-participant-' + uid;
-    let div = document.getElementById(id);
-    if (!div) {
-        div = document.createElement('div');
-        div.id = id;
-        container.appendChild(div);
+const userProfiles = {};    // uid -> { name, initial, color }
+const pendingLookups = new Set();
+
+async function fetchUserProfiles(uids) {
+    const need = uids.filter(u => !userProfiles[u] && !pendingLookups.has(u));
+    if (!need.length) return;
+    need.forEach(u => pendingLookups.add(u));
+    try {
+        const res = await fetch('/agora/user-info?uids=' + need.join(','));
+        const data = await res.json();
+        Object.keys(data || {}).forEach(k => {
+            userProfiles[k] = data[k];
+            renderParticipantBody(parseInt(k, 10));
+        });
+    } catch (err) {
+        console.warn('[AGORA] user-info fetch failed:', err);
+    } finally {
+        need.forEach(u => pendingLookups.delete(u));
     }
-    div.style.cssText = 'display:flex;align-items:center;padding:6px 10px;margin-bottom:6px;'
-        + 'background:' + (isHost ? '#fff5e6' : '#eef')
-        + ';border:1px solid ' + (isHost ? '#f0ad4e' : '#ccd')
-        + ';border-radius:4px;font-size:13px;';
-    const icon = isHost ? '<i class="bi bi-mic-fill me-2 text-warning"></i>' : '<i class="bi bi-person-fill me-2"></i>';
-    div.innerHTML = icon + label + ' <span class="text-muted ms-1">(#' + uid + ')</span>';
+}
+
+function profileOf(uid) {
+    return userProfiles[uid] || {
+        name: 'Loading…',
+        initial: '?',
+        color: 'hsl(' + ((uid * 47) % 360) + ', 35%, 55%)',
+    };
+}
+
+function ensureParticipantCard(uid, opts) {
+    const container = document.getElementById('user-participants');
+    if (!container) return null;
+    opts = opts || {};
+    const id = 'user-participant-' + uid;
+    let card = document.getElementById(id);
+    if (!card) {
+        const prof = profileOf(uid);
+        card = document.createElement('div');
+        card.id = id;
+        card.dataset.uid = String(uid);
+        card.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:6px;background:#fff;border:1px solid #e1e1e1;border-radius:6px;font-size:13px;';
+
+        const slot = document.createElement('div');
+        slot.id = 'slot-' + uid;
+        slot.style.cssText = 'width:48px;height:48px;border-radius:50%;overflow:hidden;flex-shrink:0;position:relative;background:' + prof.color + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:18px;';
+        slot.textContent = prof.initial;
+        card.appendChild(slot);
+
+        const meta = document.createElement('div');
+        meta.id = 'meta-' + uid;
+        meta.style.cssText = 'flex:1;min-width:0;';
+        card.appendChild(meta);
+
+        container.appendChild(card);
+        if (!userProfiles[uid]) fetchUserProfiles([uid]);
+    }
+    if (opts.isHost) {
+        card.style.background = '#fff5e6';
+        card.style.borderColor = '#f0ad4e';
+    } else if (uid === window.AGORA_OWN_UID) {
+        card.style.background = '#e6f7f5';
+        card.style.borderColor = '#13B2AD';
+    }
+    renderParticipantBody(uid);
+    return card;
+}
+
+function renderParticipantBody(uid) {
+    const card = document.getElementById('user-participant-' + uid);
+    if (!card) return;
+    const slot = document.getElementById('slot-' + uid);
+    const meta = document.getElementById('meta-' + uid);
+    const prof = profileOf(uid);
+    const isHost = uid === hostInfo.uid;
+    const isSelf = uid === window.AGORA_OWN_UID;
+    const hasVideo = card.dataset.hasVideo === '1';
+    const suffix = isHost ? ' (Host)' : (isSelf ? ' (You)' : '');
+
+    // Update slot only if not currently hosting a video.
+    if (slot && !hasVideo) {
+        slot.textContent = prof.initial;
+        slot.style.background = prof.color;
+    }
+    if (meta) {
+        meta.innerHTML = '<div style="font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+            + escapeHtml(prof.name) + suffix
+            + '</div>'
+            + '<div class="small text-muted">'
+            + (hasVideo ? '<i class="bi bi-camera-video-fill text-success"></i> Sharing camera' : '<i class="bi bi-person"></i> Watching')
+            + '</div>';
+    }
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function addUserParticipant(uid, _label, isHost) {
+    ensureParticipantCard(uid, { isHost });
 }
 
 function removeUserParticipant(uid) {
@@ -58,10 +141,20 @@ async function joinVideo() {
         if (data && data.host) hostInfo = data.host;
         window.AGORA_OWN_UID = data.uid;
 
-        await agoraClient.setClientRole('audience');
+        // Join as host (with publisher token) but don't publish anything yet.
+        // In Agora's `live` mode, audience members are invisible to other
+        // clients — promoting to host is the canonical way to be listed in
+        // the participants pane while still being a silent watcher.
+        await agoraClient.setClientRole('host');
         await agoraClient.join(data.appid, data.channel, data.token, data.uid);
 
-        addUserParticipant(data.uid, 'You', false);
+        ensureParticipantCard(data.uid, { isHost: false });
+        // Backfill any users already in the channel when we joined.
+        const existingUids = agoraClient.remoteUsers.map(u => u.uid);
+        if (existingUids.length) {
+            existingUids.forEach(uid => ensureParticipantCard(uid, { isHost: uid === hostInfo.uid }));
+            fetchUserProfiles(existingUids);
+        }
         setRemoteMessage('<p class="text-muted text-center py-5"><i class="bi bi-hourglass-split"></i> Waiting for <strong>' + hostInfo.name + '</strong> to start the stream…</p>');
         setStreamStatus('Connected — waiting for host');
         if (joinBtn)  joinBtn.style.display  = 'none';
@@ -70,35 +163,29 @@ async function joinVideo() {
         if (shareBtn) shareBtn.style.display = '';
 
         agoraClient.on('user-joined', (user) => {
-            const lbl = labelFor(user.uid);
-            addUserParticipant(user.uid, lbl.text, lbl.isHost);
+            ensureParticipantCard(user.uid, { isHost: user.uid === hostInfo.uid });
         });
 
         agoraClient.on('user-published', async (user, mediaType) => {
             await agoraClient.subscribe(user, mediaType);
             if (mediaType === 'video') {
                 const isHost = (user.uid === hostInfo.uid);
+                ensureParticipantCard(user.uid, { isHost });
                 if (isHost) {
                     playMainVideo(user);
                     hostIsPublishing = true;
                     setStreamStatus('Live');
-                } else {
-                    // Non-host publisher (e.g. raised-hand bidder): show as thumbnail
-                    createThumbnail(user);
                 }
+                // Always also show the publisher inside their card (small tile).
+                mountVideoInCard(user);
             }
             if (mediaType === 'audio') {
                 user.audioTrack.play();
             }
-            // Re-render label now that we know this user is publishing.
-            const lbl = labelFor(user.uid);
-            addUserParticipant(user.uid, lbl.text, lbl.isHost || user.uid === hostInfo.uid);
         });
 
         agoraClient.on('user-left', (user) => {
             removeUserParticipant(user.uid);
-            const thumb = document.getElementById('thumb-' + user.uid);
-            if (thumb) thumb.remove();
             if (user.uid === hostInfo.uid) {
                 hostIsPublishing = false;
                 setRemoteMessage('<p class="text-muted text-center py-5"><i class="bi bi-slash-circle"></i> ' + hostInfo.name + ' has left. The stream has ended.</p>');
@@ -107,10 +194,38 @@ async function joinVideo() {
         });
 
         agoraClient.on('user-unpublished', (user, mediaType) => {
-            if (mediaType === 'video' && user.uid === hostInfo.uid) {
-                hostIsPublishing = false;
-                setRemoteMessage('<p class="text-muted text-center py-5"><i class="bi bi-pause-circle"></i> ' + hostInfo.name + ' paused the stream.</p>');
-                setStreamStatus('Paused by host');
+            if (mediaType === 'video') {
+                unmountVideoInCard(user.uid);
+                if (user.uid === hostInfo.uid) {
+                    hostIsPublishing = false;
+                    setRemoteMessage('<p class="text-muted text-center py-5"><i class="bi bi-pause-circle"></i> ' + hostInfo.name + ' paused the stream.</p>');
+                    setStreamStatus('Paused by host');
+                }
+            }
+        });
+
+        // Host can broadcast control messages (mute-all, etc) via stream messages.
+        agoraClient.on('stream-message', async (uid, payload) => {
+            // Only honor messages from the auction host.
+            if (uid !== hostInfo.uid) return;
+            let msg;
+            try {
+                msg = JSON.parse(new TextDecoder().decode(payload));
+            } catch (e) { return; }
+            if (!msg || !msg.type) return;
+
+            if (msg.type === 'mute-all' && isPublishingSelf && myLocalTracks.audio) {
+                try {
+                    await myLocalTracks.audio.setMuted(true);
+                    updateMicButton(true);
+                    showHostNotice('The host muted all viewers.');
+                } catch (err) { console.warn('[AGORA] mute-all failed:', err); }
+            } else if (msg.type === 'unmute-all' && isPublishingSelf && myLocalTracks.audio) {
+                try {
+                    await myLocalTracks.audio.setMuted(false);
+                    updateMicButton(false);
+                    showHostNotice('The host re-enabled microphones.');
+                } catch (err) { console.warn('[AGORA] unmute-all failed:', err); }
             }
         });
 
@@ -171,6 +286,9 @@ async function shareMyCamera() {
         isPublishingSelf = true;
         if (shareBtn) shareBtn.style.display = 'none';
         if (stopBtn)  stopBtn.style.display  = '';
+        const micBtn = document.getElementById('btn-toggle-mic');
+        if (micBtn) micBtn.style.display = '';
+        updateMicButton(false);
     } catch (err) {
         console.error('[AGORA] shareMyCamera error:', err);
         alert('Could not start your camera: ' + (err && err.message ? err.message : err));
@@ -204,25 +322,67 @@ async function stopMyCamera(silent) {
         try { await agoraClient.setClientRole('audience'); } catch (e) {}
         const shareBtn = document.getElementById('btn-share-camera');
         const stopBtn  = document.getElementById('btn-stop-camera');
+        const micBtn   = document.getElementById('btn-toggle-mic');
         if (shareBtn) { shareBtn.disabled = false; shareBtn.style.display = ''; }
         if (stopBtn)  stopBtn.style.display  = 'none';
+        if (micBtn)   micBtn.style.display   = 'none';
     }
 }
 
-function createThumbnail(user) {
-    const list = document.getElementById('user-participants');
-    if (!list) return;
-    const existingId = 'thumb-' + user.uid;
-    const existing = document.getElementById(existingId);
-    if (existing) existing.remove();
+function showHostNotice(text) {
+    const el = document.getElementById('stream-status');
+    if (el) el.textContent = text;
+}
 
-    const thumbContainer = document.createElement('div');
-    thumbContainer.id = existingId;
-    thumbContainer.style.cssText = 'width:120px;height:80px;border:1px solid #ccc;margin:6px 0;overflow:hidden;background:#000;border-radius:4px;position:relative;';
-    list.appendChild(thumbContainer);
+function updateMicButton(muted) {
+    const btn = document.getElementById('btn-toggle-mic');
+    if (!btn) return;
+    const icon = btn.querySelector('i');
+    const label = btn.querySelector('[data-mic-label]');
+    if (icon)  icon.className  = muted ? 'bi bi-mic-mute me-1' : 'bi bi-mic me-1';
+    if (label) label.textContent = muted ? 'Unmute' : 'Mute';
+    btn.classList.toggle('muted', muted);
+}
 
-    // Agora v4: pass the container div — the SDK injects its own <video> inside.
-    user.videoTrack.play(thumbContainer, { fit: 'cover' });
+async function toggleMyMic() {
+    if (!isPublishingSelf || !myLocalTracks.audio) return;
+    const muted = !myLocalTracks.audio.muted;
+    try {
+        await myLocalTracks.audio.setMuted(muted);
+        updateMicButton(muted);
+    } catch (err) {
+        console.warn('[AGORA] toggle mic failed:', err);
+    }
+}
+
+function mountVideoInCard(user) {
+    const card = ensureParticipantCard(user.uid, { isHost: user.uid === hostInfo.uid });
+    if (!card) return;
+    card.dataset.hasVideo = '1';
+    const slot = document.getElementById('slot-' + user.uid);
+    if (!slot) return;
+    slot.textContent = '';
+    slot.style.background = '#000';
+    user.videoTrack.play(slot, { fit: 'cover' });
+    // Update only the meta text — slot already holds the Agora-injected video.
+    const meta = document.getElementById('meta-' + user.uid);
+    if (meta) {
+        const prof = profileOf(user.uid);
+        const isHost = user.uid === hostInfo.uid;
+        const isSelf = user.uid === window.AGORA_OWN_UID;
+        const suffix = isHost ? ' (Host)' : (isSelf ? ' (You)' : '');
+        meta.innerHTML = '<div style="font-weight:600;color:#222;">' + escapeHtml(prof.name) + suffix + '</div>'
+            + '<div class="small text-muted"><i class="bi bi-camera-video-fill text-success"></i> Sharing camera</div>';
+    }
+}
+
+function unmountVideoInCard(uid) {
+    const card = document.getElementById('user-participant-' + uid);
+    if (!card) return;
+    card.dataset.hasVideo = '';
+    const slot = document.getElementById('slot-' + uid);
+    if (slot) slot.innerHTML = '';
+    renderParticipantBody(uid);
 }
 
 function playMainVideo(user) {

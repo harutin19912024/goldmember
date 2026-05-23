@@ -200,9 +200,11 @@ $this->registerJs("
 ");
 
 if (!$model->isNewRecord) {
+    $adminJsPath = Yii::getAlias('@webroot/js/agora-admin.js');
+    $adminJsVer  = @filemtime($adminJsPath) ?: time();
     $this->registerJsFile('/agora/videoSDK/AgoraRTC.js', ['depends' => [\yii\web\JqueryAsset::class]]);
     $this->registerJs('window.AGORA_CHANNEL = ' . json_encode($channel) . ';', \yii\web\View::POS_BEGIN);
-    $this->registerJsFile('/js/agora-admin.js', ['depends' => [\yii\web\JqueryAsset::class]]);
+    $this->registerJsFile('/js/agora-admin.js?v=' . $adminJsVer, ['depends' => [\yii\web\JqueryAsset::class]]);
 }
 ?>
 

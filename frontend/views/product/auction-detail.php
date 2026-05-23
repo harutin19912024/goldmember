@@ -183,6 +183,9 @@ $statusLabel = [
                             <button id="btn-share-camera" onclick="shareMyCamera()" class="button secondary-button" style="display:none;">
                                 <i class="bi bi-camera-video me-1"></i><?= Yii::t('app', 'Share my camera') ?>
                             </button>
+                            <button id="btn-toggle-mic" onclick="toggleMyMic()" class="button secondary-button" style="display:none;">
+                                <i class="bi bi-mic me-1"></i><span data-mic-label><?= Yii::t('app', 'Mute') ?></span>
+                            </button>
                             <button id="btn-stop-camera" onclick="stopMyCamera()" class="button secondary-button" style="display:none;">
                                 <i class="bi bi-camera-video-off me-1"></i><?= Yii::t('app', 'Stop my camera') ?>
                             </button>
@@ -211,9 +214,10 @@ $statusLabel = [
 <?php
 // Inject Agora SDK and our script only when the auction is live and no external video link
 if ($status === 'live' && !$auction->video_link):
+    $agoraJsVer = @filemtime(Yii::getAlias('@webroot/js/agora.js')) ?: time();
     $this->registerJsFile('https://download.agora.io/sdk/release/AgoraRTC_N.js', ['position' => \yii\web\View::POS_HEAD]);
     $this->registerJs("window.AGORA_CHANNEL = " . json_encode($channel) . ";", \yii\web\View::POS_BEGIN);
-    $this->registerJsFile('/js/agora.js', ['depends' => \frontend\assets\AppAsset::class]);
+    $this->registerJsFile('/js/agora.js?v=' . $agoraJsVer, ['depends' => \frontend\assets\AppAsset::class]);
 endif;
 
 // Countdown for upcoming auctions — reloads once when it hits zero so the live stream appears

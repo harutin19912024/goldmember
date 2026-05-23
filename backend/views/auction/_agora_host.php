@@ -18,6 +18,12 @@ use yii\helpers\Html;
     <button id="btn-admin-join" type="button" class="btn btn-success" onclick="joinVideo()">
         <span class="glyphicon glyphicon-facetime-video"></span> <?= Yii::t('app', 'Join as Host') ?>
     </button>
+    <button id="btn-admin-mic" type="button" class="btn btn-default ml10" onclick="toggleAdminMic()" style="display:none;">
+        <span class="glyphicon glyphicon-volume-up"></span> <?= Yii::t('app', 'Mute') ?>
+    </button>
+    <button id="btn-admin-mute-all" type="button" class="btn btn-default ml10" onclick="muteAllViewers()" style="display:none;">
+        <span class="glyphicon glyphicon-volume-off"></span> <?= Yii::t('app', 'Mute All Viewers') ?>
+    </button>
     <button id="btn-admin-leave" type="button" class="btn btn-danger ml10" onclick="leaveVideo()" style="display:none;">
         <span class="glyphicon glyphicon-off"></span> <?= Yii::t('app', 'Leave Stream') ?>
     </button>

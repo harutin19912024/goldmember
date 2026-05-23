@@ -111,6 +111,49 @@ class AuctionController extends Controller
         ]);
     }
     
+    public function actionUserInfo($uids = '')
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        if (Yii::$app->user->isGuest) {
+            Yii::$app->response->statusCode = 401;
+            return ['error' => 'Authentication required.'];
+        }
+        $ids = array_filter(array_map('intval', explode(',', (string)$uids)));
+        if (empty($ids)) return [];
+
+        $users = \common\models\User::find()
+            ->with('customer')
+            ->where(['id' => $ids])
+            ->all();
+
+        $out = [];
+        foreach ($users as $u) {
+            $name = $u->username ?: ('User #' . $u->id);
+            if ($u->customer && $u->customer->name) {
+                $name = trim($u->customer->name . ' ' . ($u->customer->surname ?? ''));
+            }
+            $out[(int)$u->id] = self::buildProfile((int)$u->id, $name);
+        }
+        foreach ($ids as $id) {
+            if (!isset($out[$id])) {
+                $out[$id] = self::buildProfile($id, 'User #' . $id);
+            }
+        }
+        return $out;
+    }
+
+    private static function buildProfile(int $uid, string $name): array
+    {
+        $initial = mb_strtoupper(mb_substr($name, 0, 1) ?: '?');
+        $hue = ($uid * 47) % 360;
+        return [
+            'uid'     => $uid,
+            'name'    => $name,
+            'initial' => $initial,
+            'color'   => "hsl($hue, 55%, 45%)",
+        ];
+    }
+
     public function actionGetToken($channel)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
