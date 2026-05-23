@@ -172,12 +172,17 @@ async function joinVideo() {
                 const isHost = (user.uid === hostInfo.uid);
                 ensureParticipantCard(user.uid, { isHost });
                 if (isHost) {
+                    // Host's stream belongs ONLY in the main player.
+                    // Agora's track.play() can render to a single container at a time —
+                    // mounting it in the card slot as well would steal the video away
+                    // from the main player and leave it black.
                     playMainVideo(user);
                     hostIsPublishing = true;
                     setStreamStatus('Live');
+                    markHostCardLive(user.uid);
+                } else {
+                    mountVideoInCard(user);
                 }
-                // Always also show the publisher inside their card (small tile).
-                mountVideoInCard(user);
             }
             if (mediaType === 'audio') {
                 user.audioTrack.play();
@@ -195,11 +200,13 @@ async function joinVideo() {
 
         agoraClient.on('user-unpublished', (user, mediaType) => {
             if (mediaType === 'video') {
-                unmountVideoInCard(user.uid);
                 if (user.uid === hostInfo.uid) {
                     hostIsPublishing = false;
+                    markHostCardOffline(user.uid);
                     setRemoteMessage('<p class="text-muted text-center py-5"><i class="bi bi-pause-circle"></i> ' + hostInfo.name + ' paused the stream.</p>');
                     setStreamStatus('Paused by host');
+                } else {
+                    unmountVideoInCard(user.uid);
                 }
             }
         });
@@ -379,6 +386,45 @@ function mountVideoInCard(user) {
 function unmountVideoInCard(uid) {
     const card = document.getElementById('user-participant-' + uid);
     if (!card) return;
+    card.dataset.hasVideo = '';
+    const slot = document.getElementById('slot-' + uid);
+    if (slot) slot.innerHTML = '';
+    renderParticipantBody(uid);
+}
+
+// The host's video goes ONLY into the main player. Their participant card
+// keeps the initials avatar and shows a "live" indicator instead — calling
+// track.play() twice would steal the video from the main player.
+function markHostCardLive(uid) {
+    const card = document.getElementById('user-participant-' + uid);
+    if (!card) return;
+    // Make sure no leftover video tile is mounted in the slot.
+    card.dataset.hasVideo = '';
+    const slot = document.getElementById('slot-' + uid);
+    if (slot) {
+        slot.innerHTML = '';
+        const prof = profileOf(uid);
+        slot.textContent = prof.initial;
+        slot.style.background = prof.color;
+    }
+    card.dataset.live = '1';
+    const meta = document.getElementById('meta-' + uid);
+    if (meta) {
+        const prof = profileOf(uid);
+        meta.innerHTML = '<div style="font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+            + escapeHtml(prof.name) + ' (Host)'
+            + '</div>'
+            + '<div class="small" style="color:#d9534f;">'
+            + '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#d9534f;margin-right:4px;vertical-align:middle;animation:blink 1s step-start infinite;"></span>'
+            + 'Broadcasting'
+            + '</div>';
+    }
+}
+
+function markHostCardOffline(uid) {
+    const card = document.getElementById('user-participant-' + uid);
+    if (!card) return;
+    card.dataset.live = '';
     card.dataset.hasVideo = '';
     const slot = document.getElementById('slot-' + uid);
     if (slot) slot.innerHTML = '';
