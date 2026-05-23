@@ -3,6 +3,8 @@ const channelName = window.AGORA_CHANNEL || 'default-room';
 let agoraClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
 let hostInfo = { uid: null, name: 'Host' };
 let hostIsPublishing = false;
+let myLocalTracks = { video: null, audio: null };
+let isPublishingSelf = false;
 
 function setRemoteMessage(html) {
     const container = document.getElementById('remote-player');
@@ -64,6 +66,8 @@ async function joinVideo() {
         setStreamStatus('Connected — waiting for host');
         if (joinBtn)  joinBtn.style.display  = 'none';
         if (leaveBtn) leaveBtn.style.display = '';
+        const shareBtn = document.getElementById('btn-share-camera');
+        if (shareBtn) shareBtn.style.display = '';
 
         agoraClient.on('user-joined', (user) => {
             const lbl = labelFor(user.uid);
@@ -73,17 +77,22 @@ async function joinVideo() {
         agoraClient.on('user-published', async (user, mediaType) => {
             await agoraClient.subscribe(user, mediaType);
             if (mediaType === 'video') {
-                playMainVideo(user);
-                createThumbnail(user);
-                hostIsPublishing = true;
-                setStreamStatus('Live');
+                const isHost = (user.uid === hostInfo.uid);
+                if (isHost) {
+                    playMainVideo(user);
+                    hostIsPublishing = true;
+                    setStreamStatus('Live');
+                } else {
+                    // Non-host publisher (e.g. raised-hand bidder): show as thumbnail
+                    createThumbnail(user);
+                }
             }
             if (mediaType === 'audio') {
                 user.audioTrack.play();
             }
-            // Re-render label now that we know this user is publishing — almost certainly the host.
+            // Re-render label now that we know this user is publishing.
             const lbl = labelFor(user.uid);
-            addUserParticipant(user.uid, lbl.text, lbl.isHost || mediaType === 'video');
+            addUserParticipant(user.uid, lbl.text, lbl.isHost || user.uid === hostInfo.uid);
         });
 
         agoraClient.on('user-left', (user) => {
@@ -114,6 +123,7 @@ async function joinVideo() {
 }
 
 async function leaveVideo() {
+    await stopMyCamera(true);
     await agoraClient.leave();
 
     setRemoteMessage('<p class="text-muted text-center py-5">You have left the stream.</p>');
@@ -122,41 +132,109 @@ async function leaveVideo() {
 
     const joinBtn  = document.getElementById('btn-join-stream');
     const leaveBtn = document.getElementById('btn-leave-stream');
+    const shareBtn = document.getElementById('btn-share-camera');
+    const stopBtn  = document.getElementById('btn-stop-camera');
     if (joinBtn)  { joinBtn.disabled = false; joinBtn.style.display = ''; }
     if (leaveBtn) leaveBtn.style.display = 'none';
+    if (shareBtn) shareBtn.style.display = 'none';
+    if (stopBtn)  stopBtn.style.display  = 'none';
     setStreamStatus('Offline');
     hostIsPublishing = false;
+}
+
+async function shareMyCamera() {
+    if (isPublishingSelf) return;
+    const shareBtn = document.getElementById('btn-share-camera');
+    const stopBtn  = document.getElementById('btn-stop-camera');
+    if (shareBtn) shareBtn.disabled = true;
+
+    try {
+        // Audience role can't publish. Switch this client to host before publishing.
+        await agoraClient.setClientRole('host');
+
+        myLocalTracks.audio = await AgoraRTC.createMicrophoneAudioTrack();
+        myLocalTracks.video = await AgoraRTC.createCameraVideoTrack();
+        await agoraClient.publish([myLocalTracks.audio, myLocalTracks.video]);
+
+        // Local self-preview thumbnail.
+        const list = document.getElementById('user-participants');
+        if (list) {
+            const existing = document.getElementById('thumb-self');
+            if (existing) existing.remove();
+            const box = document.createElement('div');
+            box.id = 'thumb-self';
+            box.style.cssText = 'width:120px;height:80px;border:2px solid #13B2AD;margin:6px 0;overflow:hidden;background:#000;border-radius:4px;';
+            list.appendChild(box);
+            myLocalTracks.video.play(box, { fit: 'cover', mirror: true });
+        }
+
+        isPublishingSelf = true;
+        if (shareBtn) shareBtn.style.display = 'none';
+        if (stopBtn)  stopBtn.style.display  = '';
+    } catch (err) {
+        console.error('[AGORA] shareMyCamera error:', err);
+        alert('Could not start your camera: ' + (err && err.message ? err.message : err));
+        try { await agoraClient.setClientRole('audience'); } catch (e) {}
+        if (shareBtn) { shareBtn.disabled = false; shareBtn.style.display = ''; }
+        if (stopBtn)  stopBtn.style.display = 'none';
+    }
+}
+
+async function stopMyCamera(silent) {
+    if (!isPublishingSelf) return;
+    try {
+        if (myLocalTracks.video) {
+            try { await agoraClient.unpublish([myLocalTracks.video]); } catch (e) {}
+            myLocalTracks.video.stop(); myLocalTracks.video.close();
+        }
+        if (myLocalTracks.audio) {
+            try { await agoraClient.unpublish([myLocalTracks.audio]); } catch (e) {}
+            myLocalTracks.audio.stop(); myLocalTracks.audio.close();
+        }
+    } catch (err) {
+        console.warn('[AGORA] stopMyCamera cleanup:', err);
+    }
+    myLocalTracks = { video: null, audio: null };
+    isPublishingSelf = false;
+
+    const selfThumb = document.getElementById('thumb-self');
+    if (selfThumb) selfThumb.remove();
+
+    if (!silent) {
+        try { await agoraClient.setClientRole('audience'); } catch (e) {}
+        const shareBtn = document.getElementById('btn-share-camera');
+        const stopBtn  = document.getElementById('btn-stop-camera');
+        if (shareBtn) { shareBtn.disabled = false; shareBtn.style.display = ''; }
+        if (stopBtn)  stopBtn.style.display  = 'none';
+    }
 }
 
 function createThumbnail(user) {
     const list = document.getElementById('user-participants');
     if (!list) return;
-    const existing = document.getElementById('thumb-' + user.uid);
+    const existingId = 'thumb-' + user.uid;
+    const existing = document.getElementById(existingId);
     if (existing) existing.remove();
 
     const thumbContainer = document.createElement('div');
-    thumbContainer.id = 'thumb-' + user.uid;
-    thumbContainer.style.cssText = 'width:120px;height:80px;border:1px solid #ccc;margin-bottom:8px;overflow:hidden;background:#000;border-radius:4px;';
-
-    const videoEl = document.createElement('video');
-    videoEl.autoplay = true;
-    videoEl.playsInline = true;
-    videoEl.muted = true;
-    videoEl.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-    thumbContainer.appendChild(videoEl);
+    thumbContainer.id = existingId;
+    thumbContainer.style.cssText = 'width:120px;height:80px;border:1px solid #ccc;margin:6px 0;overflow:hidden;background:#000;border-radius:4px;position:relative;';
     list.appendChild(thumbContainer);
-    user.videoTrack.play(videoEl);
+
+    // Agora v4: pass the container div — the SDK injects its own <video> inside.
+    user.videoTrack.play(thumbContainer, { fit: 'cover' });
 }
 
 function playMainVideo(user) {
     const container = document.getElementById('remote-player');
     if (!container) return;
     container.innerHTML = '';
-    const video = document.createElement('video');
-    video.autoplay = true;
-    video.playsInline = true;
-    video.muted = false;
-    video.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-    container.appendChild(video);
-    user.videoTrack.play(video);
+    container.style.background = '#000';
+    container.style.display = 'block';
+    container.style.minHeight = '380px';
+
+    // Agora v4: pass the container div directly. The SDK will create its own
+    // <div><video></video></div> inside; passing a manually-created <video> element
+    // leaves the player blank.
+    user.videoTrack.play(container, { fit: 'contain' });
 }

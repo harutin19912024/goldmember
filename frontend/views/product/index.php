@@ -53,14 +53,14 @@ if (!Yii::$app->user->isGuest) {
                             </button>
 
                             <?php if ($imgSrc): ?>
-                                <a href="<?= Url::to(['/product/product', 'id' => $product['id']]) ?>">
+                                <a href="<?= Url::to(['/product/detail', 'id' => $product['id']]) ?>">
                                     <img src="<?= Html::encode($imgSrc) ?>"
                                          class="card-img-top product-card-img"
                                          alt="<?= Html::encode($product['name'] ?? '') ?>"
                                          style="object-fit:cover;height:200px;">
                                 </a>
                             <?php else: ?>
-                                <a href="<?= Url::to(['/product/product', 'id' => $product['id']]) ?>"
+                                <a href="<?= Url::to(['/product/detail', 'id' => $product['id']]) ?>"
                                    class="d-flex align-items-center justify-content-center bg-light"
                                    style="height:200px;">
                                     <i class="bi bi-image text-muted" style="font-size:2.5rem;"></i>
@@ -69,7 +69,7 @@ if (!Yii::$app->user->isGuest) {
 
                             <div class="card-body d-flex flex-column">
                                 <h6 class="card-title mb-1">
-                                    <a href="<?= Url::to(['/product/product', 'id' => $product['id']]) ?>"
+                                    <a href="<?= Url::to(['/product/detail', 'id' => $product['id']]) ?>"
                                        class="text-dark text-decoration-none">
                                         <?= Html::encode($product['name'] ?? '') ?>
                                     </a>

@@ -47,6 +47,7 @@ array_push($Rules, ['pattern' => '/power-of-pany', 'route' => 'site/power-of-pan
 array_push($Rules, ['pattern' => '/auction', 'route' => 'site/auction']);
 array_push($Rules, ['pattern' => '/best-offer', 'route' => 'site/best-offer']);
 array_push($Rules, ['pattern' => 'best-offer/<id:\d+>', 'route' => 'site/best-offer-detail']);
+array_push($Rules, ['pattern' => 'product/<id:\d+>', 'route' => 'product/detail']);
 
 //$Rules = $Rules.['POST <tag>' => 'product/index'];
 //echo "<pre>"; print_r($Rules);die;
@@ -57,6 +58,7 @@ return [
     'basePath' => dirname(__DIR__),
     'language' => 'am',
     'sourceLanguage' => 'en',
+    'timeZone' => 'Asia/Yerevan',
     'controllerNamespace' => 'frontend\controllers',
     'defaultRoute' => 'site/index',
     'bootstrap' => ['visitorTracker'],

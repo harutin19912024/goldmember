@@ -42,14 +42,14 @@ $adminUrl = Yii::$app->params['adminUrl'] ?? '';
                     </button>
 
                     <?php if ($imgSrc): ?>
-                        <a href="<?= Url::to(['/product/product', 'id' => $productId]) ?>">
+                        <a href="<?= Url::to(['/product/detail', 'id' => $productId]) ?>">
                             <img src="<?= Html::encode($imgSrc) ?>"
                                  class="card-img-top"
                                  alt="<?= Html::encode($product['name'] ?? '') ?>"
                                  style="height:160px;object-fit:cover;">
                         </a>
                     <?php else: ?>
-                        <a href="<?= Url::to(['/product/product', 'id' => $productId]) ?>"
+                        <a href="<?= Url::to(['/product/detail', 'id' => $productId]) ?>"
                            class="d-flex align-items-center justify-content-center bg-light"
                            style="height:160px;">
                             <i class="bi bi-image text-muted" style="font-size:2rem;"></i>
@@ -58,7 +58,7 @@ $adminUrl = Yii::$app->params['adminUrl'] ?? '';
 
                     <div class="card-body py-2 px-3">
                         <h6 class="card-title mb-1" style="font-size:.87rem;">
-                            <a href="<?= Url::to(['/product/product', 'id' => $productId]) ?>"
+                            <a href="<?= Url::to(['/product/detail', 'id' => $productId]) ?>"
                                class="text-dark text-decoration-none">
                                 <?= Html::encode($product['name'] ?? '') ?>
                             </a>

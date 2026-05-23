@@ -58,6 +58,9 @@ class ProductController extends Controller {
 	  ];
     }
     public function actionIndex($id = null) {
+	  if ($id !== null && ctype_digit((string)$id)) {
+		return $this->redirect(['/product/detail', 'id' => (int)$id]);
+	  }
 	  $filter = ['limit'=>24];
 
 	  if (Yii::$app->request->get('model_id')) {
@@ -382,6 +385,37 @@ class ProductController extends Controller {
 
 	  return $this->render('product_new_view', [
 			  'model' => $model
+	  ]);
+    }
+
+    public function actionDetail($id) {
+	  $product = \backend\models\Product::find()
+		  ->with(['material', 'category', 'productImages'])
+		  ->where(['id' => (int)$id, 'status' => 1])
+		  ->one();
+
+	  if (!$product) {
+		throw new NotFoundHttpException(Yii::t('app', 'Product not found.'));
+	  }
+
+	  $isFaved = false;
+	  if (!Yii::$app->user->isGuest) {
+		$isFaved = (bool) Favorites::find()
+			  ->where(['user_id' => Yii::$app->user->id, 'product_id' => $product->id])
+			  ->exists();
+	  }
+
+	  $related = \backend\models\Product::find()
+		  ->where(['status' => 1, 'category_id' => $product->category_id])
+		  ->andWhere(['<>', 'id', $product->id])
+		  ->orderBy(['popular' => SORT_DESC, 'id' => SORT_DESC])
+		  ->limit(4)
+		  ->all();
+
+	  return $this->render('detail', [
+		  'product' => $product,
+		  'isFaved' => $isFaved,
+		  'related' => $related,
 	  ]);
     }
     public function actionRate() {

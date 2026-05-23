@@ -173,12 +173,18 @@ $statusLabel = [
                             </p>
                         </div>
 
-                        <div class="p-3 d-flex gap-2 align-items-center border-top">
+                        <div class="p-3 d-flex gap-2 align-items-center border-top flex-wrap">
                             <button id="btn-join-stream" onclick="joinVideo()" class="button primary-button">
                                 <i class="bi bi-play-circle me-1"></i><?= Yii::t('app', 'Join Stream') ?>
                             </button>
                             <button id="btn-leave-stream" onclick="leaveVideo()" class="button secondary-button" style="display:none;">
                                 <i class="bi bi-stop-circle me-1"></i><?= Yii::t('app', 'Leave Stream') ?>
+                            </button>
+                            <button id="btn-share-camera" onclick="shareMyCamera()" class="button secondary-button" style="display:none;">
+                                <i class="bi bi-camera-video me-1"></i><?= Yii::t('app', 'Share my camera') ?>
+                            </button>
+                            <button id="btn-stop-camera" onclick="stopMyCamera()" class="button secondary-button" style="display:none;">
+                                <i class="bi bi-camera-video-off me-1"></i><?= Yii::t('app', 'Stop my camera') ?>
                             </button>
                         </div>
                     <?php endif ?>
