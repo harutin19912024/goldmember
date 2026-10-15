@@ -5,6 +5,8 @@ use yii\helpers\Url;
 
 /* @var $news \backend\models\News[] */
 /* @var $categories \backend\models\NewsCategory[] */
+/* @var $activeCategory \backend\models\NewsCategory|null */
+$activeCategory = $activeCategory ?? null;
 
 $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'News');
 $adminUrl    = Yii::$app->params['adminUrl'] ?? '';
@@ -53,12 +55,12 @@ $adminUrl    = Yii::$app->params['adminUrl'] ?? '';
     <?php if (!empty($categories)): ?>
         <div class="mb-4">
             <a href="<?= Url::to(['/site/news-list']) ?>"
-               class="btn btn-sm btn-outline-dark me-1">
+               class="btn btn-sm <?= $activeCategory ? 'btn-outline-dark' : 'btn-dark' ?> me-1">
                 <?= Yii::t('app', 'All') ?>
             </a>
             <?php foreach ($categories as $cat): ?>
                 <a href="<?= Url::to(['/site/news-by-category', 'category' => $cat->route_name]) ?>"
-                   class="btn btn-sm btn-outline-secondary me-1">
+                   class="btn btn-sm <?= $activeCategory && $activeCategory->id == $cat->id ? 'btn-secondary' : 'btn-outline-secondary' ?> me-1">
                     <?= Html::encode($cat->name) ?>
                 </a>
             <?php endforeach; ?>

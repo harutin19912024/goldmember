@@ -37,18 +37,18 @@
                         </a>
                     </li>
                     <li><a href="/<?=Yii::$app->language?>/news" class="link"><?= Yii::t('app', 'News'); ?></a></li>
-                    <li><a href="#contact" class="link"><?= Yii::t('app', 'Contact'); ?></a></li>
+                    <li><a href="/<?=Yii::$app->language?>#contact-us" class="link"><?= Yii::t('app', 'Contact'); ?></a></li>
                 </ul>
             </div>
 
             <!-- Useful Links -->
             <div class="footer-col col-three">
 
-                <p class="title">USEFUL LINKS</p>
+                <p class="title"><?= Yii::t('app', 'Useful Links'); ?></p>
                 <ul class="links">
-                    <li><a href="#" class="link"><?= Yii::t('app', 'Power of penny'); ?></a></li>
-                    <li><a href="#" class="link"><?= Yii::t('app', 'Auction'); ?></a></li>
-                    <li><a href="#" class="link"><?= Yii::t('app', 'Best Offer'); ?></a></li>
+                    <li><a href="/<?=Yii::$app->language?>/power-of-pany" class="link"><?= Yii::t('app', 'Power of penny'); ?></a></li>
+                    <li><a href="/<?=Yii::$app->language?>/auction" class="link"><?= Yii::t('app', 'Auction'); ?></a></li>
+                    <li><a href="/<?=Yii::$app->language?>/best-offer" class="link"><?= Yii::t('app', 'Best Offer'); ?></a></li>
                 </ul>
             </div>
 
@@ -60,8 +60,9 @@
                     <a href="mailto:<?=$settings[0]['site_email']?>"><?=$settings[0]['site_email']?></a>
                 </div>
                 <?php foreach(explode(',', $settings[0]['site_phone']) as $phone):?>
+                    <?php $phone = trim($phone); if ($phone === '') continue; ?>
                     <div class="contact-line">
-                        <a href="tel:+37494261605">(+374) 94 261 605</a>
+                        <a href="tel:+<?= preg_replace('/\D+/', '', $phone) ?>"><?= \yii\helpers\Html::encode($phone) ?></a>
                     </div>
                 <?php endforeach;?>
             </div>

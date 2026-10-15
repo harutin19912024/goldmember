@@ -322,7 +322,7 @@ $this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END,
                 <li class="me-md-4"><a href="mailto:<?=$settings[0]['site_email']?>"> <i class="bi bi-envelope-fill pe-1"></i><span><?=$settings[0]['site_email']?></span></a>
                 </li>
                 <?php foreach(explode(',', $settings[0]['site_phone']) as $phone):?>
-                <li class="me-md-4"><a href="tel:<?=$phone?>"> <i class="bi bi-telephone-fill pe-1"></i> <span><?=$phone?></span></a></li>
+                <li class="me-md-4"><a href="tel:+<?= preg_replace('/\D+/', '', $phone) ?>"> <i class="bi bi-telephone-fill pe-1"></i> <span><?= Html::encode(trim($phone)) ?></span></a></li>
                 <?php endforeach;?>
             </ul>
             <ul class="px-0 d-flex col-md-3 col-6 justify-content-end justify-content-md-start mt-0 mb-0 justify-content-md-end mb-0">
@@ -474,13 +474,13 @@ $this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END,
         <div class="marquee-wrapper">
             <div class="marquee-text">
                 <?php foreach($newses as $news): ?>
-                    <a href="<?= Yii::$app->language ?>/news/<?= $news->id ?>" target="_blank"><?= $news->title ?></a> |
+                    <a href="/<?= Yii::$app->language ?>/news/<?= $news->id ?>" target="_blank"><?= Html::encode($news->title) ?></a> |
                 <?php endforeach; ?>
             </div>
             <!-- Duplicate to ensure a seamless loop -->
             <div class="marquee-text">
                 <?php foreach($newses as $news): ?>
-                    <a href="<?= Yii::$app->language ?>/news/<?= $news->id ?>" target="_blank"><?= $news->title ?></a> |
+                    <a href="/<?= Yii::$app->language ?>/news/<?= $news->id ?>" target="_blank"><?= Html::encode($news->title) ?></a> |
                 <?php endforeach; ?>
             </div>
         </div>

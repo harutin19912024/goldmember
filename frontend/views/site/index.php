@@ -242,7 +242,7 @@ $metalPriceApiData = MetalPriceReal::find()
                         <?php endforeach;?>
                     </ul>
                     <?php endif;?>
-                    <a href="/<?=Yii::$app->language?>/news/all" class="info-text"><?=Yii::t('app', 'Show more')?> <i class="bi bi-arrow-right-short"></i></a>
+                    <a href="/<?=Yii::$app->language?>/news" class="info-text"><?=Yii::t('app', 'Show more')?> <i class="bi bi-arrow-right-short"></i></a>
                 </div>
             </div>
 
@@ -355,7 +355,7 @@ $metalPriceApiData = MetalPriceReal::find()
                             <i class="bi bi-geo-alt"></i>
                             <span><?=Yii::t('app', 'Address')?> :</span>
                         </div>
-                        <a href="https://www.google.com/maps?q=37.7749,-122.4194" target="_blank">
+                        <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode('20 Movses Khorenatsi St, Yerevan 0018, Armenia') ?>" target="_blank" rel="noopener">
                             <?=Yii::t('app', '20 Movses Khorenatsi Street, Yerevan 0018')?></a>
                     </div>
 
@@ -364,7 +364,7 @@ $metalPriceApiData = MetalPriceReal::find()
                             <i class="bi bi-envelope"></i>
                             <span><?=Yii::t('app', 'Email')?>:</span>
                         </div>
-                        <a href="mailto:info@goldmember.am">info@goldmember.am</a>
+                        <a href="mailto:<?= Html::encode($settings['site_email']) ?>"><?= Html::encode($settings['site_email']) ?></a>
                     </div>
 
                     <div class="contact-line">
@@ -372,8 +372,9 @@ $metalPriceApiData = MetalPriceReal::find()
                             <i class="bi bi-telephone"></i>
                             <span><?=Yii::t('app', 'Telephone')?>:</span>
                         </div>
-                        <a href="tel:+37494261605">(+374) 94 261 605</a>
-                        <a href="tel:+37494261606">(+374) 94 261 606</a>
+                        <?php foreach (explode(',', $settings['site_phone']) as $phone): $phone = trim($phone); if ($phone === '') continue; ?>
+                            <a href="tel:+<?= preg_replace('/\D+/', '', $phone) ?>"><?= Html::encode($phone) ?></a>
+                        <?php endforeach; ?>
                     </div>
 
                     <div class="contact-line">
