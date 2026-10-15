@@ -3,9 +3,9 @@
 @import url('theme.css');
 @import url('profile.css');
 @import url('components/buttons.css');
-@import url('components/main-banner.css');
+@import url('components/main-banner.css?v=20261016');
 @import url('components/header.css');
-@import url('components/quote.css');
+@import url('components/quote.css?v=20261016');
 @import url('components/cards.css');
 @import url('components/price-news.css');
 @import url('components/contact.css');

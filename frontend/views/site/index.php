@@ -143,12 +143,14 @@ $metalPriceApiData = MetalPriceReal::find()
 
 <section class="position-relative main-banner bg-black-color">
     <div class="position-absolute top-0 start-0 left-0 w-100 h-100 img-div">
-        <!-- Use srcset for responsive image — avoids PHP MobileDetect dependency -->
-        <img class="w-100 h-100"
-             src="/images/home-page.jpeg"
-             srcset="/images/home-page-small.jpg 768w, /images/home-page.jpeg 1442w"
-             sizes="(max-width: 768px) 768px, 1442px"
-             alt="Banner Image" height="400" width="1442" loading="eager"/>
+        <!-- <picture> by viewport width, not pixel density: with srcset alone, high-DPI
+             phones picked the wide desktop image where the bull & bear are tiny. -->
+        <picture>
+            <source media="(max-width: 768px)" srcset="/images/home-page-small.jpg">
+            <img class="w-100 h-100 home-hero-img"
+                 src="/images/home-page.jpeg"
+                 alt="<?= Html::encode(Yii::t('app', 'Goldmember')) ?>" height="400" width="1442" loading="eager" fetchpriority="high"/>
+        </picture>
     </div>
     <div class="row w-100 container mx-auto position-relative zindex-offcanvas-backdrop h-100 px-3 px-md-0 d-flex align-items-end">
         <div class="col-md-4 col-12 px-0">

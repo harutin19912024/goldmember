@@ -53,3 +53,20 @@
         }
     }
 }
+/* Homepage hero on phones: bigger bull & bear image, smaller text. */
+@media screen and (max-width: 768px) {
+    .main-banner .home-hero-img {
+        height: 250px !important;
+        object-fit: cover;
+        object-position: center;
+    }
+    .main-banner .title {
+        font-size: 26px;
+        margin-top: 12px;
+    }
+    .main-banner .text-content {
+        font-size: 16px !important;
+        line-height: 23px;
+        margin-bottom: 24px !important;
+    }
+}
