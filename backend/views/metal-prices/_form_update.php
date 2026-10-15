@@ -52,7 +52,10 @@ $template = '<div class="">{label}<div class="">{input}{error}</div></div>';
         <?= $form->field($model, 'karat')->textInput(['disabled' => true])?>
     </div>
     <div class="col-md-3">
-        <?= $form->field($model, 'price')->textInput(['maxlength' => true]) ?>
+        <?= $form->field($model, 'buy_price')->textInput(['type' => 'number', 'step' => '0.01']) ?>
+    </div>
+    <div class="col-md-3">
+        <?= $form->field($model, 'sell_price')->textInput(['type' => 'number', 'step' => '0.01']) ?>
     </div>
 
     <div class="row">
