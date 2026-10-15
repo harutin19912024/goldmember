@@ -5,6 +5,11 @@
 > docker compose ps   # should show 3 containers: app, db, phpmyadmin
 > docker compose up -d   # start if stopped
 > ```
+>
+> **Current state (2026-10-16):** work from the audit + 4 sprints sits on stacked local branches
+> `sprint-1-security` → `sprint-2-broken-pages` → `sprint-3-data-ops` → `sprint-4-seo-i18n-perf`
+> (not merged to `main`, not pushed, **not deployed**). Full report + production deploy checklist:
+> **[`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md)**.
 
 ---
 
@@ -137,6 +142,8 @@ docker compose exec db mariadb -u gssamru_autoimport -pbGtVSaf2rv6hLWN gssamru_g
 ## Credentials
 
 ### Admin (backend)
+Local URLs: http://localhost:8090 or http://admin.goldmember.local (frontend: http://goldmember.local).
+
 | Field    | Value    |
 |----------|----------|
 | Username | `harut`  |
@@ -165,6 +172,8 @@ Local secrets live in `/var/www/html/goldmember/.env` (gitignored). See `.env.ex
 | Variable | Used by | Notes |
 |---|---|---|
 | `CHATBOT_API_KEY` | `frontend/services/ChatBotService.php` via `params.php` → `getenv()` | OpenAI Responses API key. Empty = chat returns 503. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ENCRYPTION` | `common/components/Mailer.php` | Optional. Without `SMTP_HOST`, mail goes to `*/runtime/mail/*.eml`. |
+| `METALPRICE_API_KEY` | `updateExchange.php` | Optional override of the built-in metalpriceapi key. |
 
 After editing `.env`:
 ```bash
@@ -265,6 +274,8 @@ python3 -m pytest tests/playwright/ -v --browser chromium
 | `test_frontend_auth.py` | Login, register, forgot-password pages |
 | `test_backend_auth.py` | Admin login (success + failure), auth redirect |
 | `test_backend_crud.py` | Admin CRUD pages: products, news, categories, sliders, users |
+| `test_backend_access_control.py` | Guests redirected from admin; customer accounts can't log into admin |
+| `test_smoke_all_pages.py` | Every sitemap URL + account pages (customer) and every admin section + first update/view (admin): no 5xx / PHP errors. ~5 min |
 
 Local-only tests (gitignored; written for ad-hoc validation, see `.gitignore`):
 - `test_auction_flow.py` — auction CRUD + lot auto-gen + frontend listing/detail
@@ -274,6 +285,12 @@ Local-only tests (gitignored; written for ad-hoc validation, see `.gitignore`):
 ---
 
 ## Known Bugs Fixed
+
+### Session 2026-10-15/16 (audit + 4 sprints)
+See [`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md). Highlights: admin panel was open to any
+customer account; `site/login-user` let anyone log in as any user by email; public blog delete; empty homepage
+price tables + fake "Change" column; email broken on PHP 8.2; frontend wrote no error log; Armenian UI was
+Latin transliteration. All fixed on the sprint branches.
 
 ### Earlier sessions
 - Frontend crash: `language`/`sourceLanguage` were inside `components` block in `frontend/config/main.php` — moved to top-level
@@ -347,45 +364,25 @@ New entries added during this session:
 
 ---
 
-## Known Remaining Issues
+## Known Remaining Issues / Plan
 
-| Issue | Location | Severity |
-|---|---|---|
-| `CartController` mixes `Service` and `Product` models | `frontend/controllers/CartController.php` | High — cart not functional for actual products |
-| `cookieValidationKey` hardcoded placeholder | `frontend/config/main.php:63` | Medium — should move to env var |
-| No payment gateway integration | — | Critical for marketplace |
-| Backend admin panel string i18n incomplete (Russian/English mix) | various backend views | Low — cosmetic |
-| Dozens of backup/dead view files (`*-old.php`, `*-backup-*`) | `backend/views/*` | Low — clutter |
-| `enableStrictParsing=false` on frontend URL manager | `frontend/config/main.php` | Low — may route unintended 404s |
-| Git remote URL embeds a GitHub PAT in `.git/config` | `.git/config` | High — anyone with shell access can extract; rotate + use credential helper |
-| `/media/*` admin pages 500 with `Files::faxbid_or_vinradar` missing | pre-existing model bug | Low — needs investigation |
+The up-to-date list (what's done, what's left, deploy checklist) is in
+[`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md). Short version of what's left:
 
----
+1. **Merge + push + deploy** the sprint branches (push needs a new GitHub token/SSH key — the old PAT is dead and was removed from the remote URL).
+2. **Production-only config** (gitignored, check over FTP): disable Gii/debug in `backend/config/main-local.php`, `YII_DEBUG` off in both `web/index.php`, https `adminUrl` in `common/config/params.php`, cPanel cron for `updateExchange.php`, SMTP.
+3. **Cart → checkout → payment** (Idram/ArCa) — needs owner decision + merchant account.
+4. Migrate swiftmailer → `yii2-symfonymailer` (needs composer).
+5. Native-speaker review of Armenian translations; admin UI font lacks Armenian glyphs.
+6. Data cleanup on production (junk news categories, "asdfasdf" blog row); exchange-rate buy/sell look reversed.
+7. Cleanup: `*-old*` / backup views, remaining car-parts leftovers (CartController-Old, productLayout, top_menu).
 
-## Improvement Plan (priority order)
-
-### P0 — Critical / Blocking
-1. **Complete cart → order flow** — handle `Product` (not just `Service`) and create actual `Order` records
-2. **Harden `cookieValidationKey`** — read from env var
-3. **Rotate the embedded GitHub PAT** in the git remote URL
-
-### P1 — High Value
-4. **Schedule `updateExchange.php`** via cron so `metal_price_real` stays fresh
-5. **Payment gateway** — integrate ARCA or IDram (Armenia) for purchases
-6. **Email notifications** — configure SwiftMailer SMTP; send order confirmations, price alerts, **auction-won email to the winner after `closed_at` is set**
-7. **Admin dashboard** — replace placeholder with real KPIs (daily visits, new users, today's gold price delta, today's auctions GMV)
-8. ~~**Bid placement + bid history** on auctions~~ ✅ **DONE in 2026-05-24** — Copart-style bidding via `common/models/Bid.php` + `agora/place-bid` + Agora stream-message broadcast. Admin can finish auctions with "Sell to highest" or per-bid "Sell to this bidder". `/auction/view` shows the winner panel + full bid history.
-9. **Yii migration** for the `bid` table + `auction.bid_increment / current_price / winner_*` columns — currently was applied via direct SQL on both local Docker and production. Should be checked into `console/migrations/`.
-
-### P2 — Improvements
-9. **PHPUnit unit tests** for `CurrencyHelper`, `MetalPriceReal`, `Product::findList()`
-10. **Product search filters** — fineness/karat, price range, material type
-11. **REST API for mobile** — APNS/GCM suggests a mobile app; add `/api/v1/`
-12. **Real-time price widget** — JS polling or WebSocket for live metal prices on homepage
-
-### P3 — Cleanup
-13. **Remove backup view files** — delete `*-old*`, `*-backup-*`, `*-Old*`
-14. **Backend admin UI i18n** — standardize to English or finish translation
+### Conventions added 2026-10-16
+- **DB changes** go in `database/updates/YYYY-MM-DD-*.sql`, idempotent (see its README). No Yii console app exists.
+- **Admin access** is enforced app-wide by `backend/components/AdminAccessControl` (attached in tracked `backend/config/bootstrap.php`); don't rely on per-controller rules alone.
+- **Never probe delete/write endpoints with real ids**, even after removing them (opcache once served the old code and deleted a row).
+- `backend/config/main.php`, `*/config/main-local.php`, `common/config/params.php`, `*/web/index.php` are **gitignored and differ per server** — put cross-environment code in tracked files (`bootstrap.php`, components).
+- Changed CSS files pulled in via `@import` from `global.css` need a `?v=` bump there (cached 30 days).
 
 ---
 
