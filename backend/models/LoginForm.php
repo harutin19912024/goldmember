@@ -28,6 +28,22 @@ class LoginForm extends \common\models\LoginForm
     }
 
     /**
+     * Same as the parent check, but also rejects users whose role may not use
+     * the admin panel (customers). Uses the same message as a wrong password so
+     * the form doesn't reveal which accounts exist.
+     */
+    public function validatePassword($attribute, $params)
+    {
+        parent::validatePassword($attribute, $params);
+        if (!$this->hasErrors()) {
+            $user = $this->getUser();
+            if (!$user || !in_array((int)$user->role, User::BACKEND_ROLES, true)) {
+                $this->addError($attribute, 'Incorrect username or password.');
+            }
+        }
+    }
+
+    /**
      * Finds user by [[username]]
      *
      * @return User|null

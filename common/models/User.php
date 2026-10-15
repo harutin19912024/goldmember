@@ -32,6 +32,10 @@ class User extends ActiveRecord implements IdentityInterface {
 //    const STATUS_DELETED = 0;
 //    const STATUS_ACTIVE = 10;
     const ADMIN = 0;
+    const BROKER = 1;
+    const CUSTOMER = 20;
+    /** Roles allowed to sign in to the backend admin panel. */
+    const BACKEND_ROLES = [self::ADMIN, self::BROKER];
     const SCENARIO_PROFILE = 'profile';
     public static $notverified = false;
     public $favoritesCount = 0;
