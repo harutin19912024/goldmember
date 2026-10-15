@@ -37,62 +37,18 @@ class ExchangeController extends Controller
      * Lists all Address models.
      * @return mixed
      */
+    /**
+     * Legacy screens, superseded by Metal Prices and Exchange Rates; they
+     * crashed on undefined variables and aren't linked anywhere.
+     */
     public function actionIndex()
     {
-        $this->helper = new ExchangeHelper();
-
-        $searchModel = new ExchangeSearch();
-        $model = new Exchange();
-       
-        $view = 'index';
-//        if(Yii::$app->request->isPost) {
-//            $exchangeForm->load(Yii::$app->request->post());
-//            $startDate = $exchangeForm->startDate ?? '';
-//            $symbol = Exchange::AVAILABLE_METALS[Yii::$app->request->queryParams['metal']];
-//            $currency = Exchange::AVAILABLE_CURRENCIES[Yii::$app->request->queryParams['currency']];
-//        }
-
-        if(!empty(Yii::$app->request->queryParams['startDate'])) {
-            $startDate = date('Ymd', strtotime(Yii::$app->request->queryParams['startDate']));
-        }
-
-        if(!empty(Yii::$app->request->queryParams['metal'])) {
-            $view = 'metal';
-            $symbol = Exchange::AVAILABLE_METALS[Yii::$app->request->queryParams['metal']];
-        }
-
-        if(!empty(Yii::$app->request->queryParams['currency'])) {
-            $currency = Exchange::AVAILABLE_CURRENCIES[Yii::$app->request->queryParams['currency']];
-        }
-
-        $startOfDay = date('Y-m-d 00:00:00');
-        $endOfDay = date('Y-m-d 23:59:59');
-
-        
-
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, ['start' => $startOfDay, 'end' => $endOfDay]);
-
-        return $this->render($view, [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-            'prices' => $priceData,
-            'exchangeForm' => $exchangeForm,
-            'model' => $model
-        ]);
+        return $this->redirect(['/metal-prices/index']);
     }
-    
+
     public function actionMetal()
     {
-        $startOfDay = date('Y-m-d 00:00:00');
-        $endOfDay = date('Y-m-d 23:59:59');
-        $searchModel = new ExchangeSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, ['start' => $startOfDay, 'end' => $endOfDay]);
-        return $this->render('metal-index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-            'exchangeForm' => $exchangeForm,
-            'model' => $model
-        ]);
+        return $this->redirect(['/metal-prices/index']);
     }
     
     public function actionCreateMetalPrices()

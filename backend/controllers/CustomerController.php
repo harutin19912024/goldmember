@@ -31,8 +31,8 @@ class CustomerController extends Controller
                 'actions' => [
                     'index' => ['GET', 'POST'],
                     'view' => ['GET'],
-                    'create' => ['POST'],
-                    'update' => ['POST'],
+                    'create' => ['GET', 'POST'],
+                    'update' => ['GET', 'POST'],
                     'delete' => ['POST'],
                 ],
             ],
@@ -127,30 +127,65 @@ class CustomerController extends Controller
     public function actionCreate()
     {
         $customer_model = new Customer();
-        $customerAddress_model = new CustomerAddress();
-        $customerData =[
-            'Customer' => Yii::$app->request->post('Customer')
-        ];
-        $customerAddressDefaultData =[
-            'CustomerAddress' => Yii::$app->request->post('CustomerAddress')['default']
-        ];
-        $customerAddressData = Yii::$app->request->post('CustomerAddress');
 
-        if ($customer_model->load($customerData)) {
-            $customer_model->last_ip= Yii::$app->request->getUserIP();
+        if ($customer_model->load(Yii::$app->request->post()) && $customer_model->validate()) {
+            $password = Yii::$app->security->generateRandomString(8);
             $user = new User();
-            $userData = $user->addUser($customer_model);
-            $customer_model->user_id=$userData['user_id'];
-            $customer_model->save();
-            $customerAddress_model->batchInsert($customerAddressData, $customer_model->id);
-            if ($userData && $this->sendEmail($customer_model->email, 'Invite',$userData )) {
-                echo 'true';
-                exit();
-            } else {
-                Yii::$app->session->setFlash('error', 'Sorry, we are unable to send email for repairer.');
+            $user->username = $this->uniqueUsername($customer_model);
+            $user->email = (string)$customer_model->email;
+            $user->phone_number = $customer_model->phone;
+            $user->role = User::CUSTOMER;
+            $user->created = $user->updated = date('Y-m-d H:i:s');
+            $user->setPassword($password);
+            $user->generateAuthKey();
+
+            $tx = Yii::$app->db->beginTransaction();
+            try {
+                if (!$user->save()) {
+                    throw new \RuntimeException(implode(' ', $user->getErrorSummary(true)));
+                }
+                $customer_model->user_id = $user->id;
+                if ($customer_model->status === null || $customer_model->status === '') {
+                    $customer_model->status = 1;
+                }
+                $customer_model->last_ip = Yii::$app->request->getUserIP();
+                if (!$customer_model->save()) {
+                    throw new \RuntimeException(implode(' ', $customer_model->getErrorSummary(true)));
+                }
+                $tx->commit();
+            } catch (\Exception $e) {
+                $tx->rollBack();
+                Yii::$app->session->setFlash('error', Yii::t('app', 'Could not create customer: {error}', ['error' => $e->getMessage()]));
+                return $this->render('create', ['customer_model' => $customer_model]);
             }
-        } else {
+
+            $credentials = ['username' => $user->username, 'password' => $password];
+            $mailed = false;
+            try {
+                $mailed = !empty($customer_model->email) && $this->sendEmail($customer_model->email, 'Invite', $credentials);
+            } catch (\Exception $e) {
+                Yii::warning('Customer invite email failed: ' . $e->getMessage());
+            }
+            Yii::$app->session->setFlash('success', $mailed
+                ? Yii::t('app', 'Customer created and login details emailed to {email}.', ['email' => $customer_model->email])
+                : Yii::t('app', 'Customer created. Email is not configured, so pass on these login details: username {username}, password {password}', $credentials));
+            return $this->redirect(['view', 'id' => $customer_model->id]);
         }
+
+        return $this->render('create', ['customer_model' => $customer_model]);
+    }
+
+    /** Username derived from the customer's email (or name), unique in `user`. */
+    private function uniqueUsername(Customer $customer)
+    {
+        $base = $customer->email ? strstr($customer->email, '@', true) : $customer->name;
+        $base = strtolower(preg_replace('/[^A-Za-z0-9_.-]+/', '', (string)$base)) ?: 'customer';
+        $base = substr($base, 0, 40);
+        $name = $base;
+        for ($i = 1; User::find()->where(['username' => $name])->exists(); $i++) {
+            $name = $base . $i;
+        }
+        return $name;
     }
 
     /**
@@ -162,23 +197,12 @@ class CustomerController extends Controller
     public function actionUpdate($id)
     {
         $customer_model = $this->findModel($id);
-        $customerAddress_model = new CustomerAddress();
-        $customerAddressData = Yii::$app->request->post('CustomerAddress');
-        $customerData =[
-            'Customer' => Yii::$app->request->post('Customer')
-        ];
 
-        if ($customer_model->load($customerData) && $customer_model->save()) {
-
-            $customerAddress_model->bachUpdate($customerAddressData, $customer_model->id);
-
-            return $this->redirect(['index', 'id' => $customer_model->id]);
-        } else {
-            return $this->render('update', [
-                'customer_model' => $customer_model,
-                'customerAddress_model' => $customerAddress_model,
-            ]);
+        if ($customer_model->load(Yii::$app->request->post()) && $customer_model->save()) {
+            Yii::$app->session->setFlash('success', Yii::t('app', 'Customer updated.'));
+            return $this->redirect(['view', 'id' => $customer_model->id]);
         }
+        return $this->render('update', ['customer_model' => $customer_model]);
     }
 
     /**
@@ -286,7 +310,7 @@ class CustomerController extends Controller
         return Yii::$app
             ->mailer
             ->compose('email-layout', ['content' => $message])
-            ->setFrom(['admin-odenson@test.com' => Yii::$app->name])
+            ->setFrom([Yii::$app->params['adminEmail'] ?? 'info@goldmember.am' => 'Goldmember'])
             ->setTo($to)
             ->setSubject($subject)
             ->send();

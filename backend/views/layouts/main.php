@@ -339,11 +339,6 @@ $action = '/message-system/create';
                             </li>
                         </ul>
                     </li>
-                    
-                    <li class="menu-link <?php if ($currentUrl == "/compress/images"): ?>active<?php endif ?>">
-                        <?= Html::a('<span class="glyphicon glyphicon-globe"></span>
-                        <span class="sidebar-title">' . Yii::t('app', 'Compress Images') . '</span>', Url::to(['compress/images'])) ?>
-                    </li>
                 </ul>
             <?php else: ?>
                 <ul class="nav sidebar-menu">

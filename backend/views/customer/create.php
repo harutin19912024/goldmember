@@ -5,7 +5,6 @@ use yii\helpers\Html;
 
 /* @var $this yii\web\View */
 /* @var $customer_model backend\models\Customer */
-/* @var $customerAddress_model backend\models\CustomerAddress */
 
 $this->title = Yii::t('app', 'Create Customer');
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Customers'), 'url' => ['index']];
@@ -17,7 +16,6 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= $this->render('_form', [
         'customer_model' => $customer_model,
-        'customerAddress_model' => $customerAddress_model,
     ]) ?>
 
 </div>

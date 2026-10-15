@@ -3,13 +3,13 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model backend\models\Customer */
+/* @var $customer_model backend\models\Customer */
 
 $this->title = Yii::t('app', 'Update {modelClass}: ', [
     'modelClass' => 'Customer',
-]) . $model->name;
+]) . $customer_model->name;
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Customers'), 'url' => ['index']];
-$this->params['breadcrumbs'][] = ['label' => $model->name, 'url' => ['view', 'id' => $model->id]];
+$this->params['breadcrumbs'][] = ['label' => $customer_model->name, 'url' => ['view', 'id' => $customer_model->id]];
 $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
 ?>
 <div class="customer-update">
@@ -18,7 +18,6 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
 
     <?= $this->render('_form', [
         'customer_model' => $customer_model,
-        'customerAddress_model' => $customerAddress_model,
     ]) ?>
 
 </div>

@@ -177,8 +177,7 @@ if (!$model->isNewRecord) {
     </div>
 </div>
 <?php echo $this->registerJs("
-            CKEDITOR.replace('news-content'); 
-            CKEDITOR.replace('news-short_description'); 
+            CKEDITOR.replace('partners-short_description');
 "); ?>
 <?php
 $this->registerJs("
