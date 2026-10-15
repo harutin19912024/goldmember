@@ -14,7 +14,7 @@
                         <span><?=Yii::t('app', 'Goldmember')?></span>
                     </a>
                 </div>
-                <p class="info-text"><?=Yii::t('app', 'Footer About Text')?></p>
+                <p class="info-text"><?=Yii::t('app', 'Goldmember is Armenia\'s trusted platform for gold and precious metals — buy, sell and join live auctions with confidence.')?></p>
                 <ul class="px-0 d-flex justify-content-start social-buttons">
                     <?php foreach($socialLinks as $social):?>
                         <li class="social-button"><a href="<?=$social->link?>" class="social" target="_blank"> <i class="bi bi-<?=$social->social_type?>"></i> </a></li>
