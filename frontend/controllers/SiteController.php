@@ -26,6 +26,7 @@ use backend\models\Pages;
 use backend\models\Aboutus;
 use backend\models\Sitesettings;
 use backend\models\News;
+use yii\helpers\Html;
 use backend\models\NewsCategory;
 use backend\models\MetalPrices;
 use backend\models\ExchangeRates;
@@ -593,4 +594,43 @@ class SiteController extends Controller
         ]);
     }
 
+
+    /**
+     * sitemap.xml: public pages in both languages, with hreflang alternates.
+     */
+    public function actionSitemap()
+    {
+        $host = Yii::$app->request->hostInfo;
+        $entries = [];   // path (without language prefix) => lastmod|null
+        foreach (['', '/about-us', '/news', '/auction', '/best-offer', '/power-of-pany'] as $path) {
+            $entries[$path] = null;
+        }
+        foreach (News::find()->select(['id', 'updated_date', 'created_date'])->where(['status' => 1])->asArray()->all() as $n) {
+            $entries['/news/' . $n['id']] = $n['updated_date'] ?: $n['created_date'];
+        }
+        foreach (\common\models\Product::find()->select(['id'])->where(['status' => 1])->column() as $id) {
+            $entries['/product/' . $id] = null;
+        }
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+            . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">' . "\n";
+        foreach ($entries as $path => $lastmod) {
+            foreach (['am', 'en'] as $lang) {
+                $xml .= '  <url><loc>' . Html::encode("$host/$lang$path") . '</loc>';
+                if ($lastmod && strtotime($lastmod) > 0) {
+                    $xml .= '<lastmod>' . date('Y-m-d', strtotime($lastmod)) . '</lastmod>';
+                }
+                foreach (['am' => 'hy', 'en' => 'en'] as $code => $iso) {
+                    $xml .= '<xhtml:link rel="alternate" hreflang="' . $iso . '" href="' . Html::encode("$host/$code$path") . '"/>';
+                }
+                $xml .= "</url>\n";
+            }
+        }
+        $xml .= '</urlset>' . "\n";
+
+        $response = Yii::$app->response;
+        $response->format = \yii\web\Response::FORMAT_RAW;
+        $response->headers->set('Content-Type', 'application/xml; charset=UTF-8');
+        return $xml;
+    }
 }

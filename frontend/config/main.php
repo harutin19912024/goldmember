@@ -47,6 +47,7 @@ array_push($Rules, ['pattern' => '/auction', 'route' => 'site/auction']);
 array_push($Rules, ['pattern' => '/best-offer', 'route' => 'site/best-offer']);
 array_push($Rules, ['pattern' => 'best-offer/<id:\d+>', 'route' => 'site/best-offer-detail']);
 array_push($Rules, ['pattern' => 'product/<id:\d+>', 'route' => 'product/detail']);
+array_push($Rules, ['pattern' => 'sitemap.xml', 'route' => 'site/sitemap']);
 
 //$Rules = $Rules.['POST <tag>' => 'product/index'];
 //echo "<pre>"; print_r($Rules);die;
@@ -123,6 +124,8 @@ return [
             'languages' => ['am', 'en'],
             'enableDefaultLanguageUrlCode' => true,
             'enableLanguagePersistence' => true,
+            // sitemap.xml lives at the site root, without /am or /en prefix.
+            'ignoreLanguageUrlPatterns' => ['#^site/sitemap#' => '#^sitemap\.xml#'],
             'rules' => $Rules,
         ]
     ],

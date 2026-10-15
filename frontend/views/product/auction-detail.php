@@ -18,7 +18,11 @@ $lotNumber = !empty($auction->lot_number)
 $channel   = 'auction-' . $auction->id;
 $agoraAppId = Yii::$app->params['agoraAppId'];
 
-$this->title = Html::encode($product->title) . ' | ' . Yii::t('app', 'Auction');
+$this->title = $product->title . ' | ' . Yii::t('app', 'Auction');
+$this->params['description'] = $product->short_description ?: $product->description;
+$_og = $imagePath ?? null;
+if ($_og) { $this->params['ogImage'] = preg_match('#^https?://#', $_og) ? $_og : Yii::$app->request->hostInfo . '/' . ltrim($_og, '/'); }
+$this->params['ogType'] = 'article';
 
 $statusLabel = [
     'upcoming' => ['text' => Yii::t('app', 'Upcoming'), 'class' => 'bg-warning text-dark'],
