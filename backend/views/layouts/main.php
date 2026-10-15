@@ -398,6 +398,22 @@ $action = '/message-system/create';
         <!-- Begin: Content -->
         <section id="content" class="animated fadeIn">
             <?= Alert::widget() ?>
+            <?php
+            // Stale metal prices: the fetch runs from cron (updateExchange.php); if it
+            // stops, prices on the site silently go out of date. Warn admins.
+            if (!Yii::$app->user->isGuest && (int)Yii::$app->user->identity->role === \common\models\User::ADMIN):
+                $lastFetch = (new \yii\db\Query())->from('metal_price_real')->max('created_date');
+                $ageHours = $lastFetch ? (time() - strtotime($lastFetch)) / 3600 : null;
+                if ($ageHours === null || $ageHours > 48): ?>
+                <div class="alert alert-warning">
+                    <strong><?= Yii::t('app', 'Metal prices are out of date.') ?></strong>
+                    <?= $lastFetch
+                        ? Yii::t('app', 'Last fetched {date} ({days} days ago).', ['date' => $lastFetch, 'days' => (int)floor($ageHours / 24)])
+                        : Yii::t('app', 'No prices have been fetched yet.') ?>
+                    <?= Html::a(Yii::t('app', 'Fetch now'), ['/metal-prices/create']) ?>
+                    · <?= Yii::t('app', 'Check the cron job for updateExchange.php.') ?>
+                </div>
+            <?php endif; endif; ?>
             <div id="admin-alerts" class="alert-success alert" style="display:none;">
                 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
                 <div></div>
