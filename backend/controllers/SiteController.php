@@ -82,7 +82,8 @@ class SiteController extends Controller {
 							'dataProvider' => $dataProvider,
 							'dataProviderSocialNet' => $dataProviderSocialNet,
 							'dataProviderHome' => $dataProviderHome,
-							'dataProviderSettings'=>$dataProviderSettings
+							'dataProviderSettings'=>$dataProviderSettings,
+							'stats' => \backend\models\DashboardStats::collect(),
 							]);
     }
 

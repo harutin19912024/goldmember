@@ -5,9 +5,10 @@ use yii\grid\GridView;
 
 /* @var $this yii\web\View */
 
-$this->title = Yii::t('app', "Settings");
-$this->params['breadcrumbs'][] = Yii::t('app', "Settings");
+$this->title = Yii::t('app', "Dashboard");
+$this->params['breadcrumbs'][] = Yii::t('app', "Dashboard");
 ?>
+<?= $this->render('_dashboard', ['stats' => $stats]) ?>
 
 <div class="table-layout">
     <div class="tray tray-center filter">
