@@ -162,7 +162,9 @@ class CustomerController extends Controller
             $credentials = ['username' => $user->username, 'password' => $password];
             $mailed = false;
             try {
-                $mailed = !empty($customer_model->email) && $this->sendEmail($customer_model->email, 'Invite', $credentials);
+                $mailer = Yii::$app->mailer;
+                $realMail = !method_exists($mailer, 'isConfigured') || $mailer->isConfigured();
+                $mailed = $realMail && !empty($customer_model->email) && $this->sendEmail($customer_model->email, 'Invite', $credentials);
             } catch (\Exception $e) {
                 Yii::warning('Customer invite email failed: ' . $e->getMessage());
             }

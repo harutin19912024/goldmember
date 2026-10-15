@@ -75,8 +75,46 @@ class Bid extends ActiveRecord
         return $v === null ? $default : $v;
     }
 
+    /**
+     * Close an auction whose end_date has passed but that no admin finished:
+     * record the highest bid as the winner and email them. Runs lazily from
+     * snapshot(), i.e. on the first page view / poll after the end time.
+     * The conditional UPDATE (closed_at IS NULL) makes it safe when several
+     * viewers poll at once — only one request wins and sends the email.
+     */
+    public static function finalizeIfExpired(Auction $auction): bool
+    {
+        $endTs = $auction->end_date ? strtotime($auction->end_date) : false;
+        if (!$auction->hasAttribute('closed_at') || $auction->closed_at
+            || !$endTs || $endTs <= 0 || $endTs > time()) {   // <= 0: '0000-00-00' dates
+            return false;
+        }
+        $top = static::find()
+            ->where(['auction_id' => $auction->id])
+            ->orderBy(['amount' => SORT_DESC, 'id' => SORT_ASC])
+            ->one();
+
+        $set = ['closed_at' => $auction->end_date];
+        if ($top) {
+            foreach (['winner_user_id' => (int)$top->user_id, 'winning_bid_id' => (int)$top->id,
+                      'winning_amount' => $top->amount, 'current_price' => $top->amount] as $col => $val) {
+                if ($auction->hasAttribute($col)) {
+                    $set[$col] = $val;
+                }
+            }
+        }
+        $won = Auction::updateAll($set, ['and', ['id' => $auction->id], ['closed_at' => null]]) === 1;
+        $auction->refresh();
+        if ($won && $top) {
+            \common\components\AuctionNotifier::sendWinnerEmail($auction, $top);
+        }
+        return $won;
+    }
+
     public static function snapshot(Auction $auction, int $limit = 20): array
     {
+        self::finalizeIfExpired($auction);
+
         $rows = static::find()
             ->with('user.customer')
             ->where(['auction_id' => $auction->id])

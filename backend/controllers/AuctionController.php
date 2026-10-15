@@ -178,6 +178,9 @@ class AuctionController extends Controller
             Yii::$app->response->statusCode = 500;
             return ['error' => 'Could not save auction.'];
         }
+        if ($bid) {
+            \common\components\AuctionNotifier::sendWinnerEmail($auction, $bid);
+        }
 
         // Build the snapshot, then guarantee the winner is filled from the
         // chosen bid even when the auction.winner_* columns aren't present yet.
