@@ -27,7 +27,8 @@ class AuctionController extends Controller
                 'verbs' => [
                     'class' => VerbFilter::className(),
                     'actions' => [
-                        'delete' => ['POST'],
+                        'delete'        => ['POST'],
+                        'close-auction' => ['POST'],
                     ],
                 ],
             ]
@@ -111,6 +112,107 @@ class AuctionController extends Controller
         ]);
     }
     
+    /**
+     * Admin closes the auction and marks a winner. POST with auction_id and
+     * optional bid_id (defaults to highest bid). Pulls end_date forward to
+     * now so the public "ended" status takes effect.
+     */
+    public function actionCloseAuction()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        if (Yii::$app->user->isGuest) {
+            Yii::$app->response->statusCode = 401;
+            return ['error' => 'Authentication required.'];
+        }
+        if ((int)Yii::$app->user->identity->role !== 0) {
+            Yii::$app->response->statusCode = 403;
+            return ['error' => 'Only admins may close auctions.'];
+        }
+
+        $req = Yii::$app->request;
+        $auctionId = (int) ($req->post('auction_id') ?: $req->getBodyParam('auction_id'));
+        $bidId     = (int) ($req->post('bid_id')     ?: $req->getBodyParam('bid_id'));
+
+        $auction = Auction::findOne($auctionId);
+        if (!$auction) {
+            Yii::$app->response->statusCode = 404;
+            return ['error' => 'Auction not found.'];
+        }
+        if (\common\models\Bid::safeAttr($auction, 'closed_at')) {
+            Yii::$app->response->statusCode = 409;
+            return ['error' => 'Auction is already closed.'];
+        }
+
+        $bid = null;
+        if ($bidId) {
+            $bid = \common\models\Bid::findOne(['id' => $bidId, 'auction_id' => $auctionId]);
+            if (!$bid) {
+                Yii::$app->response->statusCode = 404;
+                return ['error' => 'Bid not found for this auction.'];
+            }
+        } else {
+            $bid = \common\models\Bid::find()
+                ->where(['auction_id' => $auctionId])
+                ->orderBy(['amount' => SORT_DESC, 'id' => SORT_DESC])
+                ->one();
+        }
+
+        $now = date('Y-m-d H:i:s');
+        if ($auction->hasAttribute('closed_at')) {
+            $auction->closed_at = $now;
+        }
+        if ($bid) {
+            if ($auction->hasAttribute('winner_user_id')) $auction->winner_user_id = (int)$bid->user_id;
+            if ($auction->hasAttribute('winning_bid_id')) $auction->winning_bid_id = (int)$bid->id;
+            if ($auction->hasAttribute('winning_amount')) $auction->winning_amount = (float)$bid->amount;
+            if ($auction->hasAttribute('current_price'))  $auction->current_price  = (float)$bid->amount;
+        }
+        // Ensure the public status sees the auction as ended even if the
+        // winner columns aren't present yet.
+        if ($auction->end_date && strtotime($auction->end_date) > time()) {
+            $auction->end_date = $now;
+        } elseif (!$auction->end_date) {
+            $auction->end_date = $now;
+        }
+        if (!$auction->save(false)) {
+            Yii::$app->response->statusCode = 500;
+            return ['error' => 'Could not save auction.'];
+        }
+
+        // Build the snapshot, then guarantee the winner is filled from the
+        // chosen bid even when the auction.winner_* columns aren't present yet.
+        $snap = \common\models\Bid::snapshot($auction);
+        $snap['closed'] = true;
+        if ($bid && empty($snap['winner'])) {
+            $bidder = \common\models\User::findOne($bid->user_id);
+            $snap['winner'] = [
+                'user_id' => (int)$bid->user_id,
+                'name'    => \common\models\Bid::displayName($bidder),
+                'amount'  => (float)$bid->amount,
+            ];
+        }
+
+        return [
+            'ok'       => true,
+            'snapshot' => $snap,
+        ];
+    }
+
+    public function actionBids($auction_id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        if (Yii::$app->user->isGuest) {
+            Yii::$app->response->statusCode = 401;
+            return ['error' => 'Authentication required.'];
+        }
+        $auction = Auction::findOne((int)$auction_id);
+        if (!$auction) {
+            Yii::$app->response->statusCode = 404;
+            return ['error' => 'Auction not found.'];
+        }
+        return \common\models\Bid::snapshot($auction);
+    }
+
     public function actionUserInfo($uids = '')
     {
         Yii::$app->response->format = Response::FORMAT_JSON;

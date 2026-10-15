@@ -1,10 +1,21 @@
 // Channel is set by the page before this script runs via window.AGORA_CHANNEL
 const channelName = window.AGORA_CHANNEL || 'default-room';
+// Endpoints are injected with the current language prefix so POSTs aren't
+// turned into GETs by codemix/yii2-localeurls' 302 redirect.
+const AGORA_URLS = window.AGORA_URLS || {
+    token:    '/agora/get-token',
+    hostInfo: '/agora/host-info',
+    userInfo: '/agora/user-info',
+    bids:     '/agora/bids',
+    placeBid: '/agora/place-bid',
+};
 let agoraClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
 let hostInfo = { uid: null, name: 'Host' };
 let hostIsPublishing = false;
 let myLocalTracks = { video: null, audio: null };
 let isPublishingSelf = false;
+let bidState = { increment: 50, currentPrice: 0, nextMinimum: 0, auctionId: null };
+let seenBidIds = new Set();
 
 function setRemoteMessage(html) {
     const container = document.getElementById('remote-player');
@@ -24,7 +35,7 @@ async function fetchUserProfiles(uids) {
     if (!need.length) return;
     need.forEach(u => pendingLookups.add(u));
     try {
-        const res = await fetch('/agora/user-info?uids=' + need.join(','));
+        const res = await fetch(AGORA_URLS.userInfo + '?uids=' + need.join(','));
         const data = await res.json();
         Object.keys(data || {}).forEach(k => {
             userProfiles[k] = data[k];
@@ -136,7 +147,7 @@ async function joinVideo() {
     setStreamStatus('Connecting...');
 
     try {
-        const res  = await fetch('/agora/get-token?channel=' + encodeURIComponent(channelName));
+        const res  = await fetch(AGORA_URLS.token + '?channel=' + encodeURIComponent(channelName));
         const data = await res.json();
         if (data && data.host) hostInfo = data.host;
         window.AGORA_OWN_UID = data.uid;
@@ -211,15 +222,29 @@ async function joinVideo() {
             }
         });
 
-        // Host can broadcast control messages (mute-all, etc) via stream messages.
+        // In-channel control / bid events delivered via Agora stream messages.
         agoraClient.on('stream-message', async (uid, payload) => {
-            // Only honor messages from the auction host.
-            if (uid !== hostInfo.uid) return;
             let msg;
             try {
                 msg = JSON.parse(new TextDecoder().decode(payload));
             } catch (e) { return; }
             if (!msg || !msg.type) return;
+
+            // Bid events can come from any participant (the bidder broadcasts).
+            if (msg.type === 'bid' && msg.bid) {
+                applyIncomingBid(msg.bid, msg.snapshot);
+                return;
+            }
+
+            // Admin closed the auction — render hammer + winner.
+            if (msg.type === 'auction-ended' && msg.snapshot) {
+                applySnapshot(msg.snapshot);
+                renderAuctionClosed(msg.snapshot.winner);
+                return;
+            }
+
+            // Other control messages are host-only.
+            if (uid !== hostInfo.uid) return;
 
             if (msg.type === 'mute-all' && isPublishingSelf && myLocalTracks.audio) {
                 try {
@@ -444,3 +469,203 @@ function playMainVideo(user) {
     // leaves the player blank.
     user.videoTrack.play(container, { fit: 'contain' });
 }
+
+// ----- Bidding -----
+
+function formatAmd(n) {
+    return '֏ ' + Number(n || 0).toLocaleString('en-US').replace(/,/g, '.');
+}
+
+function getCsrfToken() {
+    const m = document.querySelector('meta[name="csrf-token"]');
+    return m ? m.content : '';
+}
+
+function getCsrfParam() {
+    const m = document.querySelector('meta[name="csrf-param"]');
+    return m ? m.content : '_csrf-frontend';
+}
+
+function applySnapshot(snap) {
+    if (!snap) return;
+    bidState.auctionId    = snap.auction_id;
+    bidState.increment    = snap.increment;
+    bidState.currentPrice = snap.current_price;
+    bidState.nextMinimum  = snap.next_minimum;
+
+    const cur = document.getElementById('bid-current-amount');
+    const nxt = document.getElementById('bid-next-min');
+    if (cur) cur.textContent = formatAmd(snap.current_price);
+    if (nxt) nxt.textContent = formatAmd(snap.next_minimum);
+
+    const quickBtn = document.getElementById('btn-quick-bid');
+    const quickLbl = document.querySelector('[data-bid-quick-label]');
+    if (quickLbl) quickLbl.textContent = 'Bid ' + formatAmd(snap.next_minimum);
+    if (quickBtn) quickBtn.disabled = false;
+
+    const customInput = document.getElementById('bid-custom-input');
+    if (customInput) {
+        customInput.min = snap.next_minimum;
+        customInput.placeholder = 'Min ' + Math.round(snap.next_minimum);
+    }
+
+    // Render the feed (full list from snapshot — keeps things consistent).
+    const feed = document.getElementById('bid-feed');
+    const empty = document.getElementById('bid-empty');
+    const count = document.getElementById('bid-count');
+    if (count) count.textContent = (snap.bids || []).length;
+    if (!feed) return;
+    feed.innerHTML = '';
+    if (!snap.bids || !snap.bids.length) {
+        if (empty) feed.appendChild(empty);
+        else feed.innerHTML = '<li class="text-muted small px-3 py-3">No bids yet — be the first!</li>';
+        return;
+    }
+    snap.bids.forEach(b => feed.appendChild(buildBidLi(b, false)));
+    snap.bids.forEach(b => seenBidIds.add(b.id));
+}
+
+function buildBidLi(b, fresh) {
+    const li = document.createElement('li');
+    if (fresh) li.classList.add('fresh');
+    const when = b.created_at ? new Date(b.created_at.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    li.innerHTML = '<span><span class="bidder">' + escapeHtml(b.name || 'Bidder') + '</span>'
+        + (when ? ' <span class="bid-time">' + when + '</span>' : '')
+        + '</span><span class="bid-amount">' + formatAmd(b.amount) + '</span>';
+    return li;
+}
+
+function applyIncomingBid(bid, snapshot) {
+    if (!bid || seenBidIds.has(bid.id)) return;
+    seenBidIds.add(bid.id);
+
+    const feed = document.getElementById('bid-feed');
+    const empty = document.getElementById('bid-empty');
+    if (feed) {
+        if (empty && empty.parentNode === feed) feed.removeChild(empty);
+        feed.insertBefore(buildBidLi(bid, true), feed.firstChild);
+        const count = document.getElementById('bid-count');
+        if (count) count.textContent = feed.children.length;
+    }
+    // Recompute next minimum if the server included a snapshot, otherwise
+    // derive locally from the increment.
+    if (snapshot) {
+        applySnapshot(snapshot);
+    } else {
+        bidState.currentPrice = bid.amount;
+        bidState.nextMinimum  = bid.amount + bidState.increment;
+        const cur = document.getElementById('bid-current-amount');
+        const nxt = document.getElementById('bid-next-min');
+        const quickLbl = document.querySelector('[data-bid-quick-label]');
+        if (cur) cur.textContent = formatAmd(bidState.currentPrice);
+        if (nxt) nxt.textContent = formatAmd(bidState.nextMinimum);
+        if (quickLbl) quickLbl.textContent = 'Bid ' + formatAmd(bidState.nextMinimum);
+    }
+}
+
+async function refreshBidSnapshot() {
+    const panel = document.querySelector('.bid-panel');
+    if (!panel) return;
+    const auctionId = panel.dataset.auctionId;
+    try {
+        const res = await fetch(AGORA_URLS.bids + '?auction_id=' + encodeURIComponent(auctionId));
+        const data = await res.json();
+        if (data && !data.error) {
+            applySnapshot(data);
+            if (data.closed) renderAuctionClosed(data.winner);
+        }
+    } catch (err) { console.warn('[BID] snapshot failed:', err); }
+}
+
+function renderAuctionClosed(winner) {
+    const panel = document.querySelector('.bid-panel');
+    if (!panel) return;
+    panel.classList.add('closed-state');
+    const banner = document.getElementById('auction-closed-banner');
+    const text   = document.getElementById('closed-winner-text');
+    if (banner) banner.style.display = '';
+    if (text) {
+        text.textContent = winner
+            ? ('Won by ' + winner.name + ' for ' + formatAmd(winner.amount))
+            : 'Auction closed — no winner';
+    }
+    // Disable any bidding controls if still present.
+    const qb = document.getElementById('btn-quick-bid');
+    if (qb) qb.disabled = true;
+    const err = document.getElementById('bid-error');
+    if (err) err.style.display = 'none';
+}
+
+async function placeBidAmount(amount) {
+    const panel = document.querySelector('.bid-panel');
+    if (!panel) return;
+    const auctionId = panel.dataset.auctionId;
+    const errBox = document.getElementById('bid-error');
+    const btn = document.getElementById('btn-quick-bid');
+    if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+    if (btn) btn.disabled = true;
+
+    try {
+        const body = new URLSearchParams();
+        body.set('auction_id', auctionId);
+        body.set('amount', String(amount));
+        body.set(getCsrfParam(), getCsrfToken());
+
+        const res = await fetch(AGORA_URLS.placeBid, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': getCsrfToken(),
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json',
+            },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+            const msg = data.error || ('Failed (' + res.status + ')');
+            if (errBox) { errBox.textContent = msg; errBox.style.display = ''; }
+            return;
+        }
+        applyIncomingBid(data.bid, data.snapshot);
+
+        // Broadcast to everyone else in the channel via Agora stream messages.
+        try {
+            const payload = new TextEncoder().encode(JSON.stringify({
+                type: 'bid', bid: data.bid, snapshot: data.snapshot,
+            }));
+            await agoraClient.sendStreamMessage(payload);
+        } catch (e) {
+            console.warn('[BID] broadcast failed (others will catch up on poll):', e);
+        }
+
+        const customInput = document.getElementById('bid-custom-input');
+        if (customInput) customInput.value = '';
+    } catch (err) {
+        console.error('[BID] place failed:', err);
+        if (errBox) { errBox.textContent = 'Network error — please try again.'; errBox.style.display = ''; }
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function placeQuickBid() {
+    placeBidAmount(bidState.nextMinimum);
+}
+
+function placeCustomBid() {
+    const input = document.getElementById('bid-custom-input');
+    if (!input) return;
+    const amount = parseFloat(input.value);
+    if (isNaN(amount) || amount <= 0) {
+        const err = document.getElementById('bid-error');
+        if (err) { err.textContent = 'Enter a positive amount.'; err.style.display = ''; }
+        return;
+    }
+    placeBidAmount(amount);
+}
+
+// Initial snapshot load — runs on every page load that contains a bid panel.
+document.addEventListener('DOMContentLoaded', refreshBidSnapshot);
+// Safety net: poll every 15s in case a stream message is missed (e.g., a
+// viewer joined late and the bidder's payload didn't reach them).
+setInterval(function () { if (document.querySelector('.bid-panel')) refreshBidSnapshot(); }, 15000);

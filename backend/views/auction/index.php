@@ -91,13 +91,21 @@ $this->params['breadcrumbs'][] = $this->title;
                             ],
                             [
                                 'class' => 'yii\grid\ActionColumn',
-                                'template' => '{update}{delete}',
+                                'template' => '{view}{update}{delete}',
                                 'contentOptions' => ['style' => 'white-space: normal;'],
-                                'headerOptions' => ['style' => 'width: 9%;'],
+                                'headerOptions' => ['style' => 'width: 13%;'],
                                 'urlCreator' => function ($action, Auction $model, $key, $index, $column) {
                                     return Url::toRoute([$action, 'id' => $model->id]);
                                 },
                                 'buttons' => [
+                                    'view' => function ($url, $model) {
+                                        return Html::a('<span class="glyphicon glyphicon-eye-open"></span>' . Yii::t('app', 'View'), $url, [
+                                            'title' => Yii::t('app', 'View'),
+                                            'aria-label' => 'View',
+                                            'data-key' => $model->id,
+                                            'class' => 'btn btn-default btn-xs fs12 br2 ml5'
+                                        ]);
+                                    },
                                     'update' => function ($url, $model) {
                                         return Html::a('<span class="glyphicon glyphicon-edit"></span>' . Yii::t('app', 'Edit'), $url, [
                                             'title' => Yii::t('app', 'Edit'),

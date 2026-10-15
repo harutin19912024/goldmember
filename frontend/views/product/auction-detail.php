@@ -198,6 +198,66 @@ $statusLabel = [
                         <div id="user-participants"></div>
                     </div>
                 </div>
+
+                <?php
+                    $isHostUser = !Yii::$app->user->isGuest && (int)Yii::$app->user->id === (int)$auction->user_id;
+                ?>
+                <!-- Bidding panel — Copart-style -->
+                <div class="shadow rounded mt-3 overflow-hidden bid-panel" data-auction-id="<?= (int)$auction->id ?>">
+                    <div class="px-3 py-3 bid-header d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="bid-label text-uppercase small"><?= Yii::t('app', 'Current Bid') ?></div>
+                            <?php
+                                $initialPrice = \common\models\Bid::safeAttr($auction, 'current_price');
+                                if (!$initialPrice) $initialPrice = \common\models\Bid::safeAttr($auction, 'start_price', 0);
+                            ?>
+                            <div class="bid-current" id="bid-current-amount">֏ <?= number_format((float)$initialPrice, 0, '', '.') ?></div>
+                        </div>
+                        <div class="text-end">
+                            <div class="bid-label text-uppercase small"><?= Yii::t('app', 'Next minimum') ?></div>
+                            <div class="bid-next" id="bid-next-min">—</div>
+                        </div>
+                    </div>
+
+                    <?php if ($isHostUser): ?>
+                        <div class="p-3 small text-muted text-center">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <?= Yii::t('app', 'You are hosting this auction — bidding is disabled.') ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="p-3 d-flex flex-wrap gap-2 align-items-stretch border-top">
+                            <button id="btn-quick-bid" class="button primary-button flex-grow-1" onclick="placeQuickBid()">
+                                <i class="bi bi-hammer me-1"></i>
+                                <span data-bid-quick-label><?= Yii::t('app', 'Bid') ?> ֏ —</span>
+                            </button>
+                            <div class="input-group" style="max-width:240px;">
+                                <span class="input-group-text">֏</span>
+                                <input type="number" id="bid-custom-input" class="form-control" min="0" step="any" placeholder="<?= Yii::t('app', 'Custom amount') ?>">
+                                <button class="button secondary-button" onclick="placeCustomBid()" type="button">
+                                    <?= Yii::t('app', 'Place') ?>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="bid-error" class="px-3 pb-2 small text-danger" style="display:none;"></div>
+                    <?php endif ?>
+
+                    <div class="border-top">
+                        <div class="px-3 py-2 small fw-semibold d-flex align-items-center justify-content-between bid-feed-header">
+                            <span><?= Yii::t('app', 'Recent bids') ?></span>
+                            <span id="bid-count" class="text-muted small">0</span>
+                        </div>
+                        <ul id="bid-feed" class="list-unstyled mb-0 bid-feed">
+                            <li class="text-muted small px-3 py-3" id="bid-empty"><?= Yii::t('app', 'No bids yet — be the first!') ?></li>
+                        </ul>
+                    </div>
+
+                    <!-- Hammer / winner banner — shown after admin closes the auction -->
+                    <div id="auction-closed-banner" class="closed-banner" style="display:none;">
+                        <div class="closed-hammer">🔨</div>
+                        <div class="closed-title"><?= Yii::t('app', 'Sold!') ?></div>
+                        <div class="closed-winner" id="closed-winner-text"></div>
+                    </div>
+                </div>
             <?php endif ?>
 
         </div>
@@ -209,14 +269,79 @@ $statusLabel = [
     0%, 100% { opacity: 1; }
     50%       { opacity: 0; }
 }
+.bid-panel { background:#fff; }
+.bid-header {
+    background: linear-gradient(135deg, #0d2020 0%, #0a1818 100%);
+    color: #fff;
+}
+.bid-label { color:#53E2D9; letter-spacing:1px; font-size:.7rem; }
+.bid-current { font-size:1.9rem; font-weight:700; color:#D4A017; line-height:1.1; }
+.bid-next { font-size:1rem; color:#fff; opacity:.85; }
+#btn-quick-bid {
+    background:#D4A017; border:none; color:#000;
+    padding:14px 16px; font-weight:700; font-size:1rem;
+    transition: filter .15s ease;
+}
+#btn-quick-bid:hover { filter: brightness(1.07); }
+#btn-quick-bid:disabled { opacity:.5; cursor:not-allowed; }
+.bid-feed { max-height:260px; overflow-y:auto; }
+.bid-feed li {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 12px; border-bottom:1px solid #f0f0f0; font-size:.9rem;
+}
+.bid-feed li:last-child { border-bottom:none; }
+.bid-feed li.fresh {
+    background:#fffbea;
+    animation: bidFlash 1.5s ease-out forwards;
+}
+@keyframes bidFlash {
+    0%   { background:#fff3a8; }
+    100% { background:#fff; }
+}
+.bid-feed .bidder { font-weight:600; color:#222; }
+.bid-feed .bid-amount { font-weight:700; color:#13B2AD; }
+.bid-feed .bid-time { color:#999; font-size:.78rem; margin-left:8px; }
+
+.closed-banner {
+    padding: 28px 20px;
+    background: linear-gradient(135deg, #D4A017 0%, #b8870a 100%);
+    color: #000;
+    text-align: center;
+    border-top: 2px solid #b8870a;
+}
+.closed-hammer { font-size: 3rem; line-height: 1; animation: hammerDrop .9s cubic-bezier(.34,1.6,.64,1) 1; }
+.closed-title  { font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+.closed-winner { font-size: 1rem; font-weight: 600; margin-top: 4px; }
+@keyframes hammerDrop {
+    0%   { transform: translateY(-30px) rotate(-30deg); opacity: 0; }
+    60%  { transform: translateY(8px)  rotate(15deg);  opacity: 1; }
+    100% { transform: translateY(0)    rotate(0);                  }
+}
+.bid-panel.closed-state .bid-current,
+.bid-panel.closed-state .bid-next { opacity: .55; }
+.bid-panel.closed-state #btn-quick-bid,
+.bid-panel.closed-state #bid-custom-input,
+.bid-panel.closed-state .input-group { display: none !important; }
 </style>
 
 <?php
 // Inject Agora SDK and our script only when the auction is live and no external video link
 if ($status === 'live' && !$auction->video_link):
     $agoraJsVer = @filemtime(Yii::getAlias('@webroot/js/agora.js')) ?: time();
+    $lang = Yii::$app->language;
+    $urls = [
+        'token'     => "/$lang/agora/get-token",
+        'hostInfo'  => "/$lang/agora/host-info",
+        'userInfo'  => "/$lang/agora/user-info",
+        'bids'      => "/$lang/agora/bids",
+        'placeBid'  => "/$lang/agora/place-bid",
+    ];
     $this->registerJsFile('https://download.agora.io/sdk/release/AgoraRTC_N.js', ['position' => \yii\web\View::POS_HEAD]);
-    $this->registerJs("window.AGORA_CHANNEL = " . json_encode($channel) . ";", \yii\web\View::POS_BEGIN);
+    $this->registerJs(
+        "window.AGORA_CHANNEL = " . json_encode($channel) . ";\n"
+        . "window.AGORA_URLS = " . json_encode($urls) . ";",
+        \yii\web\View::POS_BEGIN
+    );
     $this->registerJsFile('/js/agora.js?v=' . $agoraJsVer, ['depends' => \frontend\assets\AppAsset::class]);
 endif;
 
