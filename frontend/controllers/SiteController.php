@@ -324,22 +324,6 @@ class SiteController extends Controller
         ]);
     }
 
-    public function actionBrands()
-    {
-        $filter = [];
-        $letters = Yii::$app->request->get('letter');
-        if ($letters) {
-            $filter = ['letter' => Yii::$app->request->get('letter')];
-        }
-        $brands = Brand::findList(null, $filter);
-        foreach ($brands as $key => $br) {
-            $brands[$key]['countProduct'] = Brand::getProductCountByBrand($br['id'], true);
-            $brands[$key]['products'] = Brand::getProductCountByBrand($br['id']);
-        }
-        return $this->render('brands', [
-            'brands' => $brands
-        ]);
-    }
 
     public function actionChangeCurrency($currency)
     {
@@ -417,89 +401,6 @@ class SiteController extends Controller
     }
 
 
-    public function actionLoginUser()
-    {
-        if (Yii::$app->request->isAjax) {
-            $userInfo = Yii::$app->request->post('user_info');
-            $userData = [];
-            $socialId = isset($userInfo['response']) ? $userInfo['response'][0]['id'] : $userInfo['id'];
-            $email = isset($userInfo['response']) ? $userInfo['response'][0]['email'] : $userInfo['email'];
-            $userLogin = User::find()->where(['social_id' => $socialId])->one();
-            if (empty($userLogin)) {
-                $userLogin = User::find()->where(['email' => $email])->one();
-            }
-            if (!empty($userLogin)) {
-                if (!empty($userLogin)) {
-                    Yii::$app->user->login($userLogin);
-                    echo json_encode(['redirectUrl' => Url::previous(), 'success' => true]);
-                    exit();
-                }
-            } else {
-                if (isset($userInfo['response'])) {
-                    $userData['name'] = $userInfo['response'][0]['first_name'];
-                    $userData['surname'] = $userInfo['response'][0]['last_name'];
-                    $userData['email'] = isset($userData['response'][0]['email']) ? $userData['response'][0]['email'] : '';
-                    $user = new User();
-                    $user->username = mb_strtolower($userData['name']) . $userInfo['response'][0]['id'];
-                    $user->role = 20;
-                    $user->email = isset($userData['response'][0]['email']) ? $userData['response'][0]['email'] : '';
-                    $user->social_type = 'facebook';
-                    $user->social_id = $userInfo['response'][0]['id'];
-                    $password = Yii::$app->security->generateRandomString(6);
-                    $user->setPassword($password);
-                    $user->generateAuthKey();
-                    $userData['social_user_name'] = $userInfo['response'][0]['first_name'] . ' ' . $userInfo['response'][0]['last_name'];
-                } else {
-                    $user_fio = explode(' ', $userInfo['name']);
-                    $userData['name'] = $user_fio[0];
-                    $userData['email'] = $userInfo['email'];
-                    $userData['surname'] = $user_fio[1];
-                    $userData['social_user_name'] = $userInfo['name'];
-                    $user = new User();
-                    $user->username = mb_strtolower($userData['name']) . $userInfo['id'];
-                    $user->role = 20;
-                    $user->email = isset($userData['email']) ? $userData['email'] : '';
-                    $user->social_type = 'facebook';
-                    $user->social_id = $userInfo['id'];
-                    $password = Yii::$app->security->generateRandomString(6);
-                    $user->setPassword($password);
-                    $user->generateAuthKey();
-                }
-
-                if ($user->save()) {
-                    $customer = new Customer();
-                    $customer->name = $userData['name'];
-                    $customer->surname = $userData['surname'];
-                    $customer->email = isset($userData['email']) ? $userData['email'] : '';
-                    $customer->user_id = $user->id;
-                    $customer->last_ip = \Yii::$app->request->userIP;
-                    $customer->status = 0;
-                    $customer->social_user_name = $userData['social_user_name'];
-                    $customer->auth_token = '';
-                    if ($customer->save(false)) {
-                        $userLogin = User::find()->where(['id' => $user->id])->one();
-                        if (!empty($userLogin)) {
-                            Yii::$app->user->login($userLogin);
-                            if ($customer->email != '') {
-                                echo json_encode(['redirectUrl' => Url::previous(), 'success' => true]);
-                                exit();
-                            } else {
-                                echo json_encode(['redirectUrl' => '/site/zapolnit-email', 'success' => true]);
-                                exit();
-                            }
-                        }
-                        /* $userData = ['email' => $customer->email, 'password' => $password];
-                          if ($this->sendEmail($customer->email, 'Invite', $userData)) {
-                          Yii::$app->session->setFlash('success', "Your login data sent to your email, please enter to your email to see");
-                          } */
-                    }
-                } else {
-                    echo json_encode(['redirectUrl' => Url::previous(), 'success' => false]);
-                    exit();
-                }
-            }
-        }
-    }
 
     public function sendEmail($to, $subject, $data)
     {
@@ -519,10 +420,6 @@ class SiteController extends Controller
             ->send();
     }
 
-    public function actionCart()
-    {
-        return $this->render('/cart/list');
-    }
 
     /**
      * Logs out the current user.
@@ -543,20 +440,9 @@ class SiteController extends Controller
      */
     public function actionContact()
     {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            if ($model->sendEmail('')) {
-                Yii::$app->session->setFlash('success', 'Thank you for contacting us. We will respond to you as soon as possible.');
-            } else {
-                Yii::$app->session->setFlash('error', 'There was an error sending email.');
-            }
-
-            return $this->refresh();
-        } else {
-            return $this->render('contact', [
-                'model' => $model,
-            ]);
-        }
+        // The standalone contact page was a template leftover whose form posted
+        // nowhere; the real contact block lives on the homepage.
+        return $this->redirect('/' . Yii::$app->language . '#contact-us', 301);
     }
 
     /**
@@ -605,18 +491,13 @@ class SiteController extends Controller
             throw new \yii\web\NotFoundHttpException('Category not found.');
         }
         $news = News::find()->where(['status' => 1, 'category_id' => $category->id])->orderBy(['created_date' => SORT_DESC])->all();
-        return $this->render('news-by-category', ['news' => $news, 'category' => $category]);
+        return $this->render('news-list', [
+            'news'           => $news,
+            'categories'     => NewsCategory::find()->all(),
+            'activeCategory' => $category,
+        ]);
     }
 
-    /**
-     * Displays faq page.
-     *
-     * @return mixed
-     */
-    public function actionFaq()
-    {
-        return $this->render('/faq/faq');
-    }
 
     /**
      * Signs user up.

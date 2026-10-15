@@ -418,17 +418,6 @@ class ProductController extends Controller {
 		  'related' => $related,
 	  ]);
     }
-    public function actionRate() {
-	  if (Yii::$app->request->isAjax) {
-		$product_id = (int) (Yii::$app->request->post('id'));
-		$rate = (int) (Yii::$app->request->post('rate'));
-		$product = $this->findModel($product_id);
-		$product->rate = $rate;
-		$product->save();
-		echo $rate;
-		exit();
-	  }
-    }
     public function actionFavorite() {
 	  if (Yii::$app->request->isAjax) {
 		$product_id = (int) (Yii::$app->request->post('id'));
@@ -640,18 +629,6 @@ class ProductController extends Controller {
 		return $model;
 	  } else {
 		throw new NotFoundHttpException('The requested page does not exist.');
-	  }
-    }
-    public function actionAddComment() {
-	  if (Yii::$app->request->isAjax && !empty(Yii::$app->request->post())) {
-		$comment = new Comment();
-		echo $comment->addComment();
-	  }
-    }
-    public function actionRefreshComments() {
-	  if (Yii::$app->request->isAjax && !empty(Yii::$app->request->post())) {
-		$comments = Comment::findAll(['product_id' => Yii::$app->request->post('productId')]);
-		echo $this->renderPartial('product_comment_view', ['comments' => $comments]);
 	  }
     }
 }
