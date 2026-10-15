@@ -42,8 +42,8 @@ def test_homepage_nav_links_visible(page: Page):
 
 def test_homepage_stats_visible(page: Page):
     """Stats block must render on the page."""
-    inner = page.locator("body").inner_text()
-    assert "REGISTERED CLIENTS" in inner or "ONLINE" in inner
+    # Language-independent: labels are translated on /am, so check the cards themselves.
+    assert page.locator(".overview-card").count() >= 4
 
 
 def test_homepage_no_500_error(page: Page):
