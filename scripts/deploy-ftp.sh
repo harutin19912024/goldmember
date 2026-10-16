@@ -78,12 +78,14 @@ fi
 : "${FTP_PASS:?set FTP_PASS}"
 lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" < "$script"
 
-# Verify: compare remote sizes with the local ones.
+# Verify: compare remote sizes with the local ones (one FTP session; `cls -l` prints ls-style lines).
+listing=$(for f in "${uploads[@]}"; do echo "cls -l $f"; done |
+    lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" -e "set ssl:verify-certificate no; set ftp:ssl-allow no" 2>&1)
 bad=0
 for f in "${uploads[@]}"; do
     want=$(stat -c%s "$stage/$f")
-    got=$(lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" -e "set ssl:verify-certificate no; set ftp:ssl-allow no; cls -l --size $f; bye" 2>/dev/null | awk '{print $1}')
-    if [ "$want" != "$got" ]; then echo "SIZE MISMATCH $f local=$want remote=$got"; bad=1; fi
+    got=$(awk -v p="$f" '$NF == p {print $4}' <<<"$listing")
+    if [ "$want" != "$got" ]; then echo "SIZE MISMATCH $f local=$want remote=${got:-missing}"; bad=1; fi
 done
 [ "$bad" -eq 0 ] && echo "All ${#uploads[@]} uploads verified."
 exit "$bad"
