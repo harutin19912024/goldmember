@@ -36,7 +36,6 @@ array_push($Rules, ['pattern' => 'login', 'route' => 'site/login']);
 array_push($Rules, ['pattern' => 'logout', 'route' => 'site/logout']);
 array_push($Rules, ['pattern' => 'register', 'route' => 'site/signup']);
 array_push($Rules, ['pattern' => 'forgot-password', 'route' => 'site/request-password-reset']);
-array_push($Rules, ['pattern' => '/filter-product', 'route' => 'product/filter-product']);
 array_push($Rules, ['pattern' => 'product/favorite', 'route' => 'product/favorite']);
 array_push($Rules, ['pattern' => 'product/order', 'route' => 'product/order']);
 

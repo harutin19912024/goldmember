@@ -12,7 +12,8 @@ class AppAsset extends AssetBundle
     public $basePath = '@webroot';
     public $baseUrl = '@web';
     public $css = [
-        'http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700',
+        'https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap',
+        'css/armenian-font.css',
         'css/site.css',
         'css/skin/default_skin/css/theme.css',
         'css/admin-forms.css',

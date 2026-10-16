@@ -133,12 +133,6 @@ class UserController extends \yii\web\Controller
         ]);
     }
 
-    public function actionProfileImage()
-    {
-        $this->layout = 'profile';
-        return $this->render('profile-image');
-    }
-
     public function actionUpdateItem()
     {
         if (Yii::$app->request->isAjax) {

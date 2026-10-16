@@ -1,0 +1,43 @@
+/*
+ * Open Sans has no Armenian glyphs. Register Noto Sans Armenian (variable font)
+ * as extra faces of the 'Open Sans' family, restricted to the Armenian code points, so every
+ * existing `font-family: 'Open Sans'` rule renders Armenian text without per-selector changes.
+ * One face per weight Google serves for Open Sans: the browser picks faces by weight
+ * before unicode-range, so a single `100 900` face would never be chosen.
+ * The file is only downloaded when a page actually contains Armenian characters.
+ */
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('../fonts/noto-sans-armenian/NotoSansArmenian-armenian.woff2') format('woff2');
+    unicode-range: U+0530-058F, U+FB13-FB17;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/noto-sans-armenian/NotoSansArmenian-armenian.woff2') format('woff2');
+    unicode-range: U+0530-058F, U+FB13-FB17;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/noto-sans-armenian/NotoSansArmenian-armenian.woff2') format('woff2');
+    unicode-range: U+0530-058F, U+FB13-FB17;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/noto-sans-armenian/NotoSansArmenian-armenian.woff2') format('woff2');
+    unicode-range: U+0530-058F, U+FB13-FB17;
+}
