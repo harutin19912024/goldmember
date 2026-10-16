@@ -1,5 +1,10 @@
 // Channel is injected by the page via window.AGORA_CHANNEL = 'auction-{id}'
 const channelName = window.AGORA_CHANNEL || null;
+const ADMIN_URLS = window.AGORA_ADMIN_URLS || {
+    token: '/auction/get-token',
+    userInfo: '/auction/user-info',
+    bids: '/auction/bids',
+};
 
 let agoraClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
 let localTracks  = {};
@@ -28,7 +33,7 @@ async function fetchAdminProfiles(uids) {
     if (!need.length) return;
     need.forEach(function(u) { adminPendingLookups.add(u); });
     try {
-        const res = await fetch('/auction/user-info?uids=' + need.join(','));
+        const res = await fetch(ADMIN_URLS.userInfo + '?uids=' + need.join(','));
         const data = await res.json();
         Object.keys(data || {}).forEach(function(k) {
             adminProfiles[k] = data[k];
@@ -194,8 +199,16 @@ async function joinVideo() {
         }
     });
 
+    // Listen for bid broadcasts from viewers in the same channel.
+    agoraClient.on('stream-message', function(uid, payload) {
+        let msg;
+        try { msg = JSON.parse(new TextDecoder().decode(payload)); } catch (e) { return; }
+        if (!msg || msg.type !== 'bid' || !msg.bid) return;
+        applyAdminBid(msg.bid, msg.snapshot);
+    });
+
     try {
-        const res  = await fetch('/auction/get-token?channel=' + encodeURIComponent(channelName));
+        const res  = await fetch(ADMIN_URLS.token + '?channel=' + encodeURIComponent(channelName));
         const data = await res.json();
 
         hostUid = data.uid;
@@ -364,3 +377,189 @@ async function leaveVideo() {
 
     setStreamStatus('Offline', '#999');
 }
+
+// ----- Live bid feed (admin) -----
+
+const adminSeenBidIds = new Set();
+
+function formatAmdAdmin(n) {
+    return '֏ ' + Number(n || 0).toLocaleString('en-US').replace(/,/g, '.');
+}
+
+function buildAdminBidLi(b, fresh) {
+    const li = document.createElement('li');
+    li.dataset.bidId = String(b.id);
+    li.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:13px;'
+        + (fresh ? 'background:#fff3a8;transition:background 1.5s ease-out;' : '');
+    const when = b.created_at ? new Date(b.created_at.replace(' ', 'T')).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
+    li.innerHTML = '<span><strong>' + escapeHtml(b.name || 'Bidder') + '</strong>'
+        + ' <span style="color:#999;font-size:11px;">#' + b.user_id + (when ? ' · ' + when : '') + '</span>'
+        + '</span>'
+        + '<span style="display:flex;align-items:center;gap:10px;">'
+        +   '<span style="font-weight:700;color:#13B2AD;">' + formatAmdAdmin(b.amount) + '</span>'
+        +   '<button type="button" class="btn btn-xs btn-success bid-sell-btn" onclick="sellToBid(' + b.id + ')" title="Sell to this bidder">✓ Sell</button>'
+        + '</span>';
+    if (fresh) {
+        setTimeout(function() { li.style.background = '#fff'; }, 50);
+    }
+    return li;
+}
+
+function applyAdminSnapshot(snap) {
+    if (!snap) return;
+    const cur = document.getElementById('admin-bid-current');
+    const nxt = document.getElementById('admin-bid-next');
+    const count = document.getElementById('admin-bid-count');
+    const feed = document.getElementById('admin-bid-feed');
+    const empty = document.getElementById('admin-bid-empty');
+    if (cur) cur.textContent = formatAmdAdmin(snap.current_price);
+    if (nxt) nxt.textContent = formatAmdAdmin(snap.next_minimum);
+    if (count) count.textContent = (snap.bids || []).length;
+    if (!feed) return;
+    feed.innerHTML = '';
+    if (!snap.bids || !snap.bids.length) {
+        if (empty) feed.appendChild(empty);
+        else {
+            const li = document.createElement('li');
+            li.style.cssText = 'padding:14px;color:#999;font-size:13px;text-align:center;';
+            li.textContent = 'Waiting for the first bid…';
+            feed.appendChild(li);
+        }
+        return;
+    }
+    snap.bids.forEach(function(b) {
+        adminSeenBidIds.add(b.id);
+        feed.appendChild(buildAdminBidLi(b, false));
+    });
+}
+
+function applyAdminBid(bid, snapshot) {
+    if (!bid || adminSeenBidIds.has(bid.id)) return;
+    adminSeenBidIds.add(bid.id);
+
+    const feed = document.getElementById('admin-bid-feed');
+    const empty = document.getElementById('admin-bid-empty');
+    if (feed) {
+        if (empty && empty.parentNode === feed) feed.removeChild(empty);
+        feed.insertBefore(buildAdminBidLi(bid, true), feed.firstChild);
+        const count = document.getElementById('admin-bid-count');
+        if (count) count.textContent = feed.children.length;
+    }
+    if (snapshot) {
+        // applyAdminSnapshot would re-render the whole list; just update the
+        // header numbers and trust the in-place insert above.
+        const cur = document.getElementById('admin-bid-current');
+        const nxt = document.getElementById('admin-bid-next');
+        if (cur) cur.textContent = formatAmdAdmin(snapshot.current_price);
+        if (nxt) nxt.textContent = formatAmdAdmin(snapshot.next_minimum);
+    } else {
+        const cur = document.getElementById('admin-bid-current');
+        if (cur) cur.textContent = formatAmdAdmin(bid.amount);
+    }
+}
+
+async function refreshAdminBids() {
+    const panel = document.querySelector('.admin-bid-panel');
+    if (!panel) return;
+    const auctionId = panel.dataset.auctionId;
+    try {
+        const res = await fetch(ADMIN_URLS.bids + '?auction_id=' + encodeURIComponent(auctionId));
+        const data = await res.json();
+        if (data && !data.error) {
+            applyAdminSnapshot(data);
+            if (data.closed && data.winner) {
+                renderAdminClosed(data.winner);
+            }
+        }
+    } catch (err) { console.warn('[ADMIN] bid snapshot failed:', err); }
+}
+
+function renderAdminClosed(winner) {
+    const banner = document.getElementById('admin-winner-banner');
+    const text   = document.getElementById('admin-winner-text');
+    const actions = document.getElementById('admin-close-actions');
+    if (banner && text) {
+        text.textContent = winner
+            ? ('Sold to ' + winner.name + ' for ' + formatAmdAdmin(winner.amount))
+            : 'Auction closed (no winner)';
+        banner.style.display = 'block';
+    }
+    if (actions) actions.style.display = 'none';
+    document.querySelectorAll('.bid-sell-btn').forEach(function(b) { b.disabled = true; });
+}
+
+function getCsrfTokenAdmin() {
+    const m = document.querySelector('meta[name="csrf-token"]');
+    return m ? m.content : '';
+}
+function getCsrfParamAdmin() {
+    const m = document.querySelector('meta[name="csrf-param"]');
+    return m ? m.content : '_csrf-backend';
+}
+
+async function postCloseAuction(bidId) {
+    const panel = document.querySelector('.admin-bid-panel');
+    if (!panel) return;
+    const auctionId = panel.dataset.auctionId;
+    const btn = document.getElementById('btn-close-auction');
+    if (btn) btn.disabled = true;
+    document.querySelectorAll('.bid-sell-btn').forEach(function(b) { b.disabled = true; });
+
+    try {
+        const body = new URLSearchParams();
+        body.set('auction_id', auctionId);
+        if (bidId) body.set('bid_id', String(bidId));
+        body.set(getCsrfParamAdmin(), getCsrfTokenAdmin());
+
+        const res = await fetch(ADMIN_URLS.close, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': getCsrfTokenAdmin(),
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json',
+            },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+            alert(data.error || ('Close failed (' + res.status + ')'));
+            if (btn) btn.disabled = false;
+            document.querySelectorAll('.bid-sell-btn').forEach(function(b) { b.disabled = false; });
+            return;
+        }
+        // Render closed state locally.
+        if (data.snapshot && data.snapshot.winner) {
+            renderAdminClosed(data.snapshot.winner);
+        }
+        // Broadcast to all clients in the channel so viewers see the hammer.
+        try {
+            if (isJoined) {
+                const payload = new TextEncoder().encode(JSON.stringify({
+                    type:    'auction-ended',
+                    snapshot: data.snapshot,
+                }));
+                await agoraClient.sendStreamMessage(payload);
+            }
+        } catch (e) {
+            console.warn('[ADMIN] auction-ended broadcast failed (viewers will catch up on poll):', e);
+        }
+    } catch (err) {
+        console.error('[ADMIN] close failed:', err);
+        alert('Network error — please try again.');
+        if (btn) btn.disabled = false;
+        document.querySelectorAll('.bid-sell-btn').forEach(function(b) { b.disabled = false; });
+    }
+}
+
+function closeAuctionToHighest() {
+    if (!confirm('Close auction and sell to the highest bidder?')) return;
+    postCloseAuction(null);
+}
+
+function sellToBid(bidId) {
+    if (!confirm('Sell to this bidder?')) return;
+    postCloseAuction(bidId);
+}
+
+document.addEventListener('DOMContentLoaded', refreshAdminBids);
+setInterval(function() { if (document.querySelector('.admin-bid-panel')) refreshAdminBids(); }, 15000);

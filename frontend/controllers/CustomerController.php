@@ -26,7 +26,7 @@ class CustomerController extends \yii\web\Controller
             ],
             'access' => [
                 'class' => \yii\filters\AccessControl::className(),
-                'only' => ['index', 'delete', 'add-address', 'edite-address', 'save-address','profile'],
+                'only' => ['index', 'delete', 'add-address', 'edite-address', 'save-address', 'profile', 'update-item'],
                 'rules' => [
                     // allow authenticated users
                     [
@@ -46,15 +46,14 @@ class CustomerController extends \yii\web\Controller
     public function actionEditeAddress()
     {
         $post = Yii::$app->request->post();
-        $id = $post['id'];
-        $model = CustomerAddress::findOne($id);
+        $model = $this->findOwnAddress($post['id'] ?? null);
         return $this->renderPartial('update',['model'=>$model]);
     }
 
     public function actionSaveAddress()
     {
         $post = Yii::$app->request->post();
-        $model = CustomerAddress::findOne($post['CustomerAddress']['id']);
+        $model = $this->findOwnAddress($post['CustomerAddress']['id'] ?? null);
         if($model->load($post) && $model->validate()){
             $isValid = $this->ValidateAddress(array(
                 'country' => $model->country,
@@ -86,7 +85,7 @@ class CustomerController extends \yii\web\Controller
         if(\Yii::$app->request->isPost){
             $post = \Yii::$app->request->post();
             $CustomerAddressID = $post['id'];
-            $model = CustomerAddress::findOne($CustomerAddressID);
+            $model = $this->findOwnAddress($CustomerAddressID);
             if($model){
                 $model->delete();
                 return json_encode(['success'=>true]);
@@ -146,8 +145,7 @@ class CustomerController extends \yii\web\Controller
         return $isValid;
     }
     public function actionProfile(){
-        $this->layout='profile';
-        return $this->render('profile');
+        return $this->redirect(['/user/profile']);
     }
     public function actionUpdateItem()
     {
@@ -161,5 +159,19 @@ class CustomerController extends \yii\web\Controller
                 return json_encode($CustomerAddress->errors);
             }
         }
+    }
+
+    /**
+     * Address lookup restricted to the signed-in customer, so one user can't
+     * read, edit or delete another user's address by guessing its id.
+     */
+    protected function findOwnAddress($id)
+    {
+        $customer = Yii::$app->user->identity->customer ?? null;
+        $model = $customer ? CustomerAddress::findOne(['id' => $id, 'customer_id' => $customer->id]) : null;
+        if ($model === null) {
+            throw new \yii\web\NotFoundHttpException('Address not found.');
+        }
+        return $model;
     }
 }

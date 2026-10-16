@@ -18,6 +18,12 @@ services:
       # Secrets pulled from the host .env file (Compose auto-loads it from the project root).
       # See .env.example for the full list; copy that to .env and fill in real values.
       CHATBOT_API_KEY: ${CHATBOT_API_KEY:-}
+      # Outgoing mail (optional). Without SMTP_HOST, mail is written to runtime/mail.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_ENCRYPTION: ${SMTP_ENCRYPTION:-tls}
     depends_on:
       db:
         condition: service_healthy

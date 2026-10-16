@@ -191,6 +191,3 @@ if (!$model->isNewRecord) {
         </div>
     </div>
 </div>
-<?php echo $this->registerJs("
-            CKEDITOR.replace('slider-short_description');
-"); ?>

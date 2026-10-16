@@ -156,23 +156,18 @@ if (!$model->isNewRecord) {
         </div>
         <div class="panel-body" style="display:block;">
 
-            <?php if ($auctionStatus === 'ended'): ?>
-                <div class="alert alert-default" style="background:#f5f5f5; border:1px solid #ddd; padding:12px; border-radius:4px;">
-                    <i class="fa fa-info-circle"></i> <?= Yii::t('app', 'This auction has ended. Live streaming is no longer available.') ?>
-                </div>
-
-            <?php elseif ($auctionStatus === 'upcoming'): ?>
+            <?php if ($auctionStatus === 'upcoming'): ?>
                 <div class="alert alert-warning" style="padding:12px;">
                     <i class="fa fa-clock-o"></i>
                     <?= Yii::t('app', 'Auction starts at') ?>
                     <strong><?= date('d M Y, H:i', strtotime($model->start_date)) ?></strong>.
                     <?= Yii::t('app', 'You can pre-join to test your stream before it goes live.') ?>
                 </div>
-                <?= $this->renderFile('@backend/views/auction/_agora_host.php', ['model' => $model]) ?>
-
-            <?php else: /* live or no-date — allow joining */ ?>
-                <?= $this->renderFile('@backend/views/auction/_agora_host.php', ['model' => $model]) ?>
             <?php endif ?>
+            <?= $this->renderFile('@backend/views/auction/_agora_host.php', [
+                'model'         => $model,
+                'auctionStatus' => $auctionStatus,
+            ]) ?>
 
         </div>
     </div>
@@ -202,8 +197,19 @@ $this->registerJs("
 if (!$model->isNewRecord) {
     $adminJsPath = Yii::getAlias('@webroot/js/agora-admin.js');
     $adminJsVer  = @filemtime($adminJsPath) ?: time();
+    $lang = Yii::$app->language ?: 'am';
+    $adminUrls = [
+        'token'    => "/$lang/auction/get-token",
+        'userInfo' => "/$lang/auction/user-info",
+        'bids'     => "/$lang/auction/bids",
+        'close'    => "/$lang/auction/close-auction",
+    ];
     $this->registerJsFile('/agora/videoSDK/AgoraRTC.js', ['depends' => [\yii\web\JqueryAsset::class]]);
-    $this->registerJs('window.AGORA_CHANNEL = ' . json_encode($channel) . ';', \yii\web\View::POS_BEGIN);
+    $this->registerJs(
+        'window.AGORA_CHANNEL = ' . json_encode($channel) . ";\n"
+        . 'window.AGORA_ADMIN_URLS = ' . json_encode($adminUrls) . ';',
+        \yii\web\View::POS_BEGIN
+    );
     $this->registerJsFile('/js/agora-admin.js?v=' . $adminJsVer, ['depends' => [\yii\web\JqueryAsset::class]]);
 }
 ?>

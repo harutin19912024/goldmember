@@ -66,16 +66,18 @@ class UserController extends \yii\web\Controller
 
 
         $this->layout = 'main';
-        $role = Yii::$app->user->identity->role;
-        $view_file_path = '';
-        $userModel = null;
-        if ($role == 20) {
-            $userModel = Yii::$app->user->identity->customer;
-            $view_file_path = 'customer/profile';
-        } elseif ($role == User::REPAIRER) {
-            $userModel = Yii::$app->user->identity->repairer;
-            $view_file_path = 'repairer/profile';
+        $identity = Yii::$app->user->identity;
+        $userModel = $identity->customer;
+        if ($userModel === null) {
+            // Accounts without a customer row (admins, legacy/social sign-ups):
+            // show what the user record knows instead of crashing the page.
+            $userModel = new Customer([
+                'name'  => $identity->username,
+                'email' => $identity->email,
+                'phone' => $identity->phone_number,
+            ]);
         }
+        $view_file_path = 'customer/profile';
 
         $user_id = Yii::$app->user->identity->id;
 
@@ -108,23 +110,8 @@ class UserController extends \yii\web\Controller
 
     public function actionHistory()
     {
-        $this->layout = 'profile';
-        $role = Yii::$app->user->identity->role;
-        $view_file_path = '';
-        if ($role == User::CUSTOMER) {
-            $user_id = Yii::$app->user->identity->customer->id;
-            $view_file_path = 'customer/history';
-        } elseif ($role == User::REPAIRER) {
-            $user_id = Yii::$app->user->identity->repairer->id;
-            $view_file_path = 'repairer/history';
-        }
-        $searchModel = new OrderSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $user_id, $role);
-
-        return $this->render($view_file_path, [
-            'dataProvider' => $dataProvider,
-            'searchModel' => $searchModel
-        ]);
+        // Order history lives in the Orders tab of the profile page now.
+        return $this->redirect(['/user/profile', '#' => 'orders-pane']);
     }
 
     /**
@@ -133,12 +120,12 @@ class UserController extends \yii\web\Controller
 
     public function actionEditPassword()
     {
-        $this->layout = 'profile';
+        $this->layout = 'main';
         $model = new EditPassword();
         $model->username = Yii::$app->user->identity->username;
         if ($model->load(Yii::$app->request->post()) && $model->edit()) {
-            Yii::$app->session->setFlash('success', 'Your password successfuly updated!');
-            return $this->redirect('/user/profile');
+            Yii::$app->session->setFlash('success', Yii::t('app', 'Your password has been updated.'));
+            return $this->redirect(['/user/profile']);
         }
 
         return $this->render('edit-password', [

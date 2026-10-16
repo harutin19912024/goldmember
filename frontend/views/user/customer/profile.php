@@ -55,6 +55,14 @@ $initials = strtoupper(
 <!-- Breadcrumb -->
 <?= $this->render('/site/partials/breadcrumb', ['prev' => 'Home', 'prevUrl' => '/' . Yii::$app->language, 'current' => 'My Profile']) ?>
 
+<?php foreach (Yii::$app->session->getAllFlashes() as $type => $messages): ?>
+    <?php foreach ((array)$messages as $message): ?>
+        <div class="container px-sm-0 pt-4">
+            <div class="alert alert-<?= $type === 'error' ? 'danger' : Html::encode($type) ?> mb-0"><?= Html::encode($message) ?></div>
+        </div>
+    <?php endforeach; ?>
+<?php endforeach; ?>
+
 <!-- Profile Content -->
 <section class="container py-5 px-sm-0">
     <div class="row g-4">
@@ -107,6 +115,10 @@ $initials = strtoupper(
                         <a href="#favorites-tab" class="btn btn-sm text-start"
                            style="color:#D4A017; border:1px solid #D4A01720;">
                             <i class="bi bi-heart me-2"></i><?= Yii::t('app', 'Favourites') ?>
+                        </a>
+                        <a href="<?= Url::to(['/user/edit-password']) ?>" class="btn btn-sm text-start"
+                           style="color:#13B2AD; border:1px solid #13B2AD20;">
+                            <i class="bi bi-key me-2"></i><?= Yii::t('app', 'Change Password') ?>
                         </a>
                         <hr class="my-1">
                         <a href="<?= Url::to(['/site/logout']) ?>"

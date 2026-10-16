@@ -35,7 +35,7 @@ class Files extends \yii\db\ActiveRecord {
     public function rules() {
         return [
             //[['category_id', 'category', 'status', 'top'], 'required'],
-            [['category_id', 'status', 'top', 'faxbid_or_vinradar'], 'integer'],
+            [['category_id', 'status', 'top'], 'integer'],
             [['path', 'category', 'title','link'], 'string', 'max' => 255],
             [['path'], 'image',  'skipOnEmpty' => true,  'extensions' => 'png, jpg','maxFiles' => 10,'maxSize' => 1024 * 1024 * 5]
         ];

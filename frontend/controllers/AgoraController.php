@@ -8,13 +8,21 @@ use yii\web\Response;
 use yii\web\BadRequestHttpException;
 use yii\filters\AccessControl;
 use common\components\agora\RtcTokenBuilder2;
+use common\models\Bid;
 use backend\models\Auction;
+use yii\filters\VerbFilter;
 
 class AgoraController extends Controller
 {
     public function behaviors()
     {
         return array_merge(parent::behaviors(), [
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'place-bid' => ['POST'],
+                ],
+            ],
             'access' => [
                 'class' => AccessControl::class,
                 'rules' => [
@@ -123,6 +131,98 @@ class AgoraController extends Controller
      * label the publisher correctly and show "waiting for host" before the
      * stream starts.
      */
+    /**
+     * Initial / refresh bid snapshot for an auction.
+     */
+    public function actionBids($auction_id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $auction = Auction::findOne((int)$auction_id);
+        if (!$auction) {
+            Yii::$app->response->statusCode = 404;
+            return ['error' => 'Auction not found.'];
+        }
+        return Bid::snapshot($auction);
+    }
+
+    /**
+     * Place a bid. POST JSON or form with auction_id and amount. Returns the
+     * new bid plus the refreshed snapshot.
+     */
+    public function actionPlaceBid()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $req = Yii::$app->request;
+        $auctionId = (int)($req->post('auction_id') ?: $req->getBodyParam('auction_id'));
+        $amount    = (float)($req->post('amount')     ?: $req->getBodyParam('amount'));
+
+        $auction = Auction::findOne($auctionId);
+        if (!$auction) {
+            Yii::$app->response->statusCode = 404;
+            return ['error' => 'Auction not found.'];
+        }
+
+        // Auction must be live (between start and end).
+        $now = time();
+        $start = $auction->start_date ? strtotime($auction->start_date) : 0;
+        $end   = $auction->end_date   ? strtotime($auction->end_date)   : null;
+        if ($start && $now < $start) {
+            Yii::$app->response->statusCode = 409;
+            return ['error' => 'Auction has not started yet.'];
+        }
+        if ($end && $now > $end) {
+            Yii::$app->response->statusCode = 409;
+            return ['error' => 'Auction has ended.'];
+        }
+
+        // Admin who created the auction can't bid in their own auction.
+        $userId = (int) Yii::$app->user->id;
+        if ((int)$auction->user_id === $userId) {
+            Yii::$app->response->statusCode = 403;
+            return ['error' => 'Hosts cannot bid in their own auction.'];
+        }
+
+        $high = Bid::highestAmount($auction->id);
+        $minNext = Bid::nextMinimum($auction, $high);
+        if ($amount + 0.0001 < $minNext) {
+            Yii::$app->response->statusCode = 400;
+            return [
+                'error'        => 'Bid must be at least ' . number_format($minNext, 2, '.', ''),
+                'next_minimum' => $minNext,
+            ];
+        }
+
+        $bid = new Bid([
+            'auction_id' => $auction->id,
+            'user_id'    => $userId,
+            'amount'     => $amount,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        if (!$bid->save()) {
+            Yii::$app->response->statusCode = 500;
+            return ['error' => 'Could not save bid.', 'details' => $bid->errors];
+        }
+
+        // Keep auction.current_price in sync for cheap reads — only if the
+        // column has been added to the schema. Skip silently otherwise.
+        if ($auction->hasAttribute('current_price')) {
+            $auction->current_price = $amount;
+            $auction->save(false, ['current_price']);
+        }
+
+        return [
+            'ok'       => true,
+            'bid'      => [
+                'id'         => (int)$bid->id,
+                'user_id'    => (int)$bid->user_id,
+                'amount'     => (float)$bid->amount,
+                'name'       => Bid::displayName(Yii::$app->user->identity),
+                'created_at' => $bid->created_at,
+            ],
+            'snapshot' => Bid::snapshot($auction),
+        ];
+    }
+
     public function actionHostInfo($channel)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;

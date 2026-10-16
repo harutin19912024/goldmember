@@ -1,0 +1,18 @@
+# Goldmember — https://goldmember.am
+User-agent: *
+Disallow: /am/login
+Disallow: /en/login
+Disallow: /am/register
+Disallow: /en/register
+Disallow: /am/forgot-password
+Disallow: /en/forgot-password
+Disallow: /am/user/
+Disallow: /en/user/
+Disallow: /am/agora/
+Disallow: /en/agora/
+Disallow: /am/chat/
+Disallow: /en/chat/
+Disallow: /am/logout
+Disallow: /en/logout
+
+Sitemap: https://goldmember.am/sitemap.xml

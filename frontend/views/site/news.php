@@ -5,13 +5,17 @@ use yii\helpers\Url;
 
 /* @var $news \backend\models\News */
 
-$this->title = Yii::t('app', 'Goldmember') . ' | ' . Html::encode($news->title);
+$this->title = Yii::t('app', 'Goldmember') . ' | ' . $news->title;
+$this->params['description'] = $news->short_description ?? $news->title;
+$this->params['ogType'] = 'article';
 
 $adminUrl   = Yii::$app->params['adminUrl'] ?? '';
 $primaryImg = $news->newsImagesPrimary;
 $imagePath  = $primaryImg
     ? $adminUrl . 'uploads/images/news/' . $news->id . '/' . $primaryImg->name
     : null;
+$_og = $imagePath ?? null;
+if ($_og) { $this->params['ogImage'] = preg_match('#^https?://#', $_og) ? $_og : Yii::$app->request->hostInfo . '/' . ltrim($_og, '/'); }
 
 ?>
 

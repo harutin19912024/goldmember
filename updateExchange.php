@@ -9,7 +9,15 @@
  *   0 9 * * *  /usr/bin/php /var/www/html/goldmember/updateExchange.php >> /var/www/html/goldmember/error.log 2>&1
  */
 
-const API_KEY = '328dbc54ea99eeba3e5ca4e64604cc19';
+// CLI/cron only: if the project root is ever web-reachable, a request must not
+// be able to trigger API calls (quota) or DB writes.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+
+// METALPRICE_API_KEY in the environment overrides the built-in key.
+define('API_KEY', getenv('METALPRICE_API_KEY') ?: '328dbc54ea99eeba3e5ca4e64604cc19');
 const API_URL = 'https://api.metalpriceapi.com/v1/latest';
 const TROY_OUNCE_GRAMS = 31.1035;
 const METALS = [1 => 'XAU', 2 => 'XAG', 3 => 'XPT', 4 => 'XPD'];

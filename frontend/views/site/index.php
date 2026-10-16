@@ -47,9 +47,12 @@ $product = new Product();
 
 $newses = News::find()->limit(15)->all();
 
-$exchanges = ExchangeRates::find()
-    ->where(['between', 'updated_at', date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])
-    ->all();
+// Latest available rates/prices, not "today only": on days nobody entered
+// prices the homepage tables used to render empty.
+$exchangeDay = ExchangeRates::find()->max('DATE(updated_at)');
+$exchanges = $exchangeDay
+    ? ExchangeRates::find()->where(['between', 'updated_at', $exchangeDay . ' 00:00:00', $exchangeDay . ' 23:59:59'])->all()
+    : [];
 
 
 // $subQuery = (new Query())
@@ -60,14 +63,33 @@ $exchanges = ExchangeRates::find()
 //     ->from('metal_prices');
 
 $karats = ['999', '995', '750', '875', '585'];
-$startOfDay = date('Y-m-d 00:00:00');
-$endOfDay = date('Y-m-d 23:59:59');
-$metalPrices = MetalPrices::find()
+$pricesDay = MetalPrices::find()->where(['karat' => $karats])->max('DATE(created_at)');
+$metalPrices = !$pricesDay ? [] : MetalPrices::find()
     ->where(['karat' => $karats])
-    ->andWhere(['between', 'created_at', $startOfDay, $endOfDay])
+    ->andWhere(['between', 'created_at', $pricesDay . ' 00:00:00', $pricesDay . ' 23:59:59'])
     ->with(['metal', 'currency'])
     ->orderBy(['karat' => SORT_DESC])
     ->all();
+
+// Real day-over-day change (the "Change" column used to be a hardcoded "↓ 0.3").
+$prevSell = [];
+if ($pricesDay) {
+    $prevDay = MetalPrices::find()->where(['karat' => $karats])->andWhere(['<', 'created_at', $pricesDay . ' 00:00:00'])->max('DATE(created_at)');
+    if ($prevDay) {
+        foreach (MetalPrices::find()->where(['karat' => $karats])
+                     ->andWhere(['between', 'created_at', $prevDay . ' 00:00:00', $prevDay . ' 23:59:59'])->all() as $p) {
+            $prevSell[$p->metal_id . '|' . $p->currency_id . '|' . $p->karat] = (float)$p->sell_price;
+        }
+    }
+}
+$changeCell = function ($delta, $suffix = '') {
+    if ($delta === null || abs($delta) < 0.005) {
+        return '<span class="text-muted">—</span>';
+    }
+    return $delta > 0
+        ? '<span class="text-success">↑</span> ' . number_format($delta, 2) . $suffix
+        : '<span class="text-danger">↓</span> ' . number_format(abs($delta), 2) . $suffix;
+};
     
 //echo "<pre>"; print_r($director);die;
 
@@ -79,15 +101,23 @@ $this->title = Yii::t('app', 'Goldmember') . ' | ' . Yii::t('app', 'Home');
 <?php
 $responseData = [];
 $price = [];
+// Latest GOLD row (metal_id 1 = XAU). All four metals share one fetch
+// timestamp, so ordering by date alone returned an arbitrary metal.
 $metalPriceApiData = MetalPriceReal::find()
-        ->orderBy(['created_date' => SORT_DESC])
+        ->where(['metal_id' => 1])
+        ->orderBy(['id' => SORT_DESC])
         ->one();
     if(!empty($metalPriceApiData) && empty($metalPriceApiData->request_error)) {
-        // request_data is stored as a JSON string; decode if needed.
-        $price = is_string($metalPriceApiData->request_data)
-            ? (json_decode($metalPriceApiData->request_data, true) ?: [])
-            : ($metalPriceApiData->request_data ?: []);
+        // request_data is a JSON string; older rows were JSON-encoded twice.
+        $price = $metalPriceApiData->request_data;
+        for ($i = 0; $i < 2 && is_string($price); $i++) {
+            $price = json_decode($price, true);
+        }
+        $price = is_array($price) ? $price : [];
     }
+    $globalChangePct = (!empty($price['price']) && !empty($price['prev_close_price']))
+        ? ($price['price'] - $price['prev_close_price']) / $price['prev_close_price'] * 100
+        : null;
     if (!empty($price['bid']) && !empty($price['ask'])) {
         $pricePerGram = round($price['bid'] / 31.1035, 4);
         $sell = round($price['ask'] / 31.1035, 4);
@@ -113,12 +143,14 @@ $metalPriceApiData = MetalPriceReal::find()
 
 <section class="position-relative main-banner bg-black-color">
     <div class="position-absolute top-0 start-0 left-0 w-100 h-100 img-div">
-        <!-- Use srcset for responsive image — avoids PHP MobileDetect dependency -->
-        <img class="w-100 h-100"
-             src="/images/home-page.jpeg"
-             srcset="/images/home-page-small.jpg 768w, /images/home-page.jpeg 1442w"
-             sizes="(max-width: 768px) 768px, 1442px"
-             alt="Banner Image" height="400" width="1442" loading="eager"/>
+        <!-- <picture> by viewport width, not pixel density: with srcset alone, high-DPI
+             phones picked the wide desktop image where the bull & bear are tiny. -->
+        <picture>
+            <source media="(max-width: 768px)" srcset="/images/home-page-small.jpg">
+            <img class="w-100 h-100 home-hero-img"
+                 src="/images/home-page.jpeg"
+                 alt="<?= Html::encode(Yii::t('app', 'Goldmember')) ?>" height="400" width="1442" loading="eager" fetchpriority="high"/>
+        </picture>
     </div>
     <div class="row w-100 container mx-auto position-relative zindex-offcanvas-backdrop h-100 px-3 px-md-0 d-flex align-items-end">
         <div class="col-md-4 col-12 px-0">
@@ -242,7 +274,7 @@ $metalPriceApiData = MetalPriceReal::find()
                         <?php endforeach;?>
                     </ul>
                     <?php endif;?>
-                    <a href="/<?=Yii::$app->language?>/news/all" class="info-text"><?=Yii::t('app', 'Show more')?> <i class="bi bi-arrow-right-short"></i></a>
+                    <a href="/<?=Yii::$app->language?>/news" class="info-text"><?=Yii::t('app', 'Show more')?> <i class="bi bi-arrow-right-short"></i></a>
                 </div>
             </div>
 
@@ -282,10 +314,12 @@ $metalPriceApiData = MetalPriceReal::find()
                                 <div><?=$price->karat?></div>
                                 <div><?=round($price->sell_price, 2)?></div>
                                 <div><?=round($price->buy_price, 2)?></div>
-                                <div><span class="text-danger">↓</span> 0.3</div>
+                                <?php $prevKey = $price->metal_id . '|' . $price->currency_id . '|' . $price->karat; ?>
+                                <div><?= $changeCell(isset($prevSell[$prevKey]) ? (float)$price->sell_price - $prevSell[$prevKey] : null) ?></div>
                             </div>
                             <?php endforeach;?>
                         </div>
+                        <?php if ($pricesDay): ?><div class="small text-muted mt-2 px-1"><?= Yii::t('app', 'Per gram, {currency} · as of {date}', ['currency' => Html::encode($metalPrices[0]->currency->name ?? ''), 'date' => Yii::$app->formatter->asDate($pricesDay, 'medium')]) ?></div><?php endif; ?>
                     </div>
                     <div class="table primary-color" id="exchangeRates" role="tabpanel" aria-labelledby="home-tab">
                         <div class="table-header">
@@ -302,6 +336,7 @@ $metalPriceApiData = MetalPriceReal::find()
                             </div>
                             <?php endforeach;?>
                         </div>
+                        <?php if ($exchangeDay): ?><div class="small text-muted mt-2 px-1"><?= Yii::t('app', 'As of {date}', ['date' => Yii::$app->formatter->asDate($exchangeDay, 'medium')]) ?></div><?php endif; ?>
                     </div>
                     <div class="table primary-color" id="globalPrice" role="tabpanel" aria-labelledby="global-tab">
                         <div class="table-header">
@@ -318,10 +353,11 @@ $metalPriceApiData = MetalPriceReal::find()
                                 <div><?=$key?></div>
                                 <div><?=round($price['buy'], 2)?></div>
                                 <div><?=round($price['sell'], 2)?></div>
-                                <div><span class="text-danger">↓</span> 0.3</div>
+                                <div><?= $changeCell($globalChangePct, '%') ?></div>
                             </div>
                             <?php endforeach;?>
                         </div>
+                        <?php if ($responseData): ?><div class="small text-muted mt-2 px-1"><?= Yii::t('app', 'Per gram, USD (international spot) · as of {date}', ['date' => Yii::$app->formatter->asDate($metalPriceApiData->created_date, 'medium')]) ?></div><?php endif; ?>
                     </div>
                     <div class="table primary-color" id="trade" role="tabpanel" aria-labelledby="global-tab">
                         <!-- TradingView chart: loaded lazily only when the Trade tab is active -->
@@ -355,7 +391,7 @@ $metalPriceApiData = MetalPriceReal::find()
                             <i class="bi bi-geo-alt"></i>
                             <span><?=Yii::t('app', 'Address')?> :</span>
                         </div>
-                        <a href="https://www.google.com/maps?q=37.7749,-122.4194" target="_blank">
+                        <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode('20 Movses Khorenatsi St, Yerevan 0018, Armenia') ?>" target="_blank" rel="noopener">
                             <?=Yii::t('app', '20 Movses Khorenatsi Street, Yerevan 0018')?></a>
                     </div>
 
@@ -364,7 +400,7 @@ $metalPriceApiData = MetalPriceReal::find()
                             <i class="bi bi-envelope"></i>
                             <span><?=Yii::t('app', 'Email')?>:</span>
                         </div>
-                        <a href="mailto:info@goldmember.am">info@goldmember.am</a>
+                        <a href="mailto:<?= Html::encode($settings['site_email']) ?>"><?= Html::encode($settings['site_email']) ?></a>
                     </div>
 
                     <div class="contact-line">
@@ -372,8 +408,9 @@ $metalPriceApiData = MetalPriceReal::find()
                             <i class="bi bi-telephone"></i>
                             <span><?=Yii::t('app', 'Telephone')?>:</span>
                         </div>
-                        <a href="tel:+37494261605">(+374) 94 261 605</a>
-                        <a href="tel:+37494261606">(+374) 94 261 606</a>
+                        <?php foreach (explode(',', $settings['site_phone']) as $phone): $phone = trim($phone); if ($phone === '') continue; ?>
+                            <a href="tel:+<?= preg_replace('/\D+/', '', $phone) ?>"><?= Html::encode($phone) ?></a>
+                        <?php endforeach; ?>
                     </div>
 
                     <div class="contact-line">

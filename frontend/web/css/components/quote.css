@@ -4,7 +4,7 @@
     font-family: 'Inter', sans-serif;
 
     .quote-title {
-        line-height: 24px;
+        line-height: 1.25; /* was 24px < 32px font: wrapped lines overlapped on phones */
         font-size: 32px;
         margin-bottom: 34px;
         font-family: 'Inter', sans-serif;

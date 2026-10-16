@@ -41,22 +41,20 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'label' => '',
                                 'headerOptions' => ['style' => 'width: 5%;'],
                                 'value' => function ($model) {
-                                    $image = $model->getDefaultImage($model->id);
-
-                                    if (isset($image[1])) {
-                                        $path = 'uploads/images/' . $image[1];
-                                    } else {
-                                        $path = 'images/goldmember.jpg';
+                                    // files.path holds the stored file name directly.
+                                    if ($model->category === 'video' || preg_match('/\.(mp4|webm|mov)$/i', (string)$model->path)) {
+                                        return Html::a('<span class="glyphicon glyphicon-film"></span> ' . Html::encode($model->path),
+                                            '/uploads/videos/' . $model->path, ['target' => '_blank']);
                                     }
-
-                                    return Html::img('/' . $path, ['style' => 'width: 40px !important']);
+                                    return Html::img('/uploads/images/' . $model->path, ['style' => 'width: 40px !important']);
                                 },
                                 'filterInputOptions' => [
                                     'class' => 'form-control',
                                     'placeholder' => 'Search'
                                 ],
                             ],
-                            'title',
+                            'category',
+                            'created_at',
                             ['class' => 'yii\grid\ActionColumn',
                                 'template' => '{update}{delete}',
                                 'contentOptions' => ['style' => 'white-space: normal;'],

@@ -26,7 +26,6 @@ array_push($Rules, ['pattern' => 'search', 'route' => 'product/index']);
 array_push($Rules, ['pattern' => 'change-language/<language:\w+>', 'route' => 'site/change-language']);
 array_push($Rules, ['pattern' => 'more-details', 'route' => 'site/more-details']);
 array_push($Rules, ['pattern' => 'signup', 'route' => 'site/signup']);
-array_push($Rules, ['pattern' => 'search-by-vin', 'route' => 'product/search-by-vin']);
 array_push($Rules, ['pattern' => 'news', 'route' => 'site/news-list']);
 array_push($Rules, ['pattern' => 'news/<id:\d+>', 'route' => 'site/news']);
 array_push($Rules, ['pattern' => 'news/<category:[a-zA-Z0-9\-]+>', 'route'   => 'site/news-by-category']);
@@ -48,6 +47,7 @@ array_push($Rules, ['pattern' => '/auction', 'route' => 'site/auction']);
 array_push($Rules, ['pattern' => '/best-offer', 'route' => 'site/best-offer']);
 array_push($Rules, ['pattern' => 'best-offer/<id:\d+>', 'route' => 'site/best-offer-detail']);
 array_push($Rules, ['pattern' => 'product/<id:\d+>', 'route' => 'product/detail']);
+array_push($Rules, ['pattern' => 'sitemap.xml', 'route' => 'site/sitemap']);
 
 //$Rules = $Rules.['POST <tag>' => 'product/index'];
 //echo "<pre>"; print_r($Rules);die;
@@ -61,7 +61,7 @@ return [
     'timeZone' => 'Asia/Yerevan',
     'controllerNamespace' => 'frontend\controllers',
     'defaultRoute' => 'site/index',
-    'bootstrap' => ['visitorTracker'],
+    'bootstrap' => ['log', 'visitorTracker'],
     'components' => [
         'visitorTracker' => ['class' => 'common\components\VisitorTracker'],
         'db' => $db,
@@ -124,6 +124,8 @@ return [
             'languages' => ['am', 'en'],
             'enableDefaultLanguageUrlCode' => true,
             'enableLanguagePersistence' => true,
+            // sitemap.xml lives at the site root, without /am or /en prefix.
+            'ignoreLanguageUrlPatterns' => ['#^site/sitemap#' => '#^sitemap\.xml#'],
             'rules' => $Rules,
         ]
     ],

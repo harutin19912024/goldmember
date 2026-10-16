@@ -14,7 +14,7 @@
                         <span><?=Yii::t('app', 'Goldmember')?></span>
                     </a>
                 </div>
-                <p class="info-text"><?=Yii::t('app', 'Footer About Text')?></p>
+                <p class="info-text"><?=Yii::t('app', 'Goldmember is Armenia\'s trusted platform for gold and precious metals — buy, sell and join live auctions with confidence.')?></p>
                 <ul class="px-0 d-flex justify-content-start social-buttons">
                     <?php foreach($socialLinks as $social):?>
                         <li class="social-button"><a href="<?=$social->link?>" class="social" target="_blank"> <i class="bi bi-<?=$social->social_type?>"></i> </a></li>
@@ -37,18 +37,18 @@
                         </a>
                     </li>
                     <li><a href="/<?=Yii::$app->language?>/news" class="link"><?= Yii::t('app', 'News'); ?></a></li>
-                    <li><a href="#contact" class="link"><?= Yii::t('app', 'Contact'); ?></a></li>
+                    <li><a href="/<?=Yii::$app->language?>#contact-us" class="link"><?= Yii::t('app', 'Contact'); ?></a></li>
                 </ul>
             </div>
 
             <!-- Useful Links -->
             <div class="footer-col col-three">
 
-                <p class="title">USEFUL LINKS</p>
+                <p class="title"><?= Yii::t('app', 'Useful Links'); ?></p>
                 <ul class="links">
-                    <li><a href="#" class="link"><?= Yii::t('app', 'Power of penny'); ?></a></li>
-                    <li><a href="#" class="link"><?= Yii::t('app', 'Auction'); ?></a></li>
-                    <li><a href="#" class="link"><?= Yii::t('app', 'Best Offer'); ?></a></li>
+                    <li><a href="/<?=Yii::$app->language?>/power-of-pany" class="link"><?= Yii::t('app', 'Power of penny'); ?></a></li>
+                    <li><a href="/<?=Yii::$app->language?>/auction" class="link"><?= Yii::t('app', 'Auction'); ?></a></li>
+                    <li><a href="/<?=Yii::$app->language?>/best-offer" class="link"><?= Yii::t('app', 'Best Offer'); ?></a></li>
                 </ul>
             </div>
 
@@ -60,8 +60,9 @@
                     <a href="mailto:<?=$settings[0]['site_email']?>"><?=$settings[0]['site_email']?></a>
                 </div>
                 <?php foreach(explode(',', $settings[0]['site_phone']) as $phone):?>
+                    <?php $phone = trim($phone); if ($phone === '') continue; ?>
                     <div class="contact-line">
-                        <a href="tel:+37494261605">(+374) 94 261 605</a>
+                        <a href="tel:+<?= preg_replace('/\D+/', '', $phone) ?>"><?= \yii\helpers\Html::encode($phone) ?></a>
                     </div>
                 <?php endforeach;?>
             </div>

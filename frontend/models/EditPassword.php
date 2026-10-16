@@ -25,7 +25,8 @@ class EditPassword extends Model
         return [
             [['new_password', 'old_password', 'confirm_password',], 'required'],
             [['new_password', 'old_password', 'confirm_password'], 'string', 'min' => 6],
-            ['confirm_password', 'compare', 'compareAttribute' => 'old_password'],
+            ['confirm_password', 'compare', 'compareAttribute' => 'new_password',
+                'message' => Yii::t('app', 'Passwords do not match.')],
             ['old_password', 'validatePassword']
 //            [['email'], 'unique', 'targetClass'=>Customer::className(),'targetAttribute'=>'email']
         ];

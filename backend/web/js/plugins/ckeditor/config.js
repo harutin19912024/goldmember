@@ -35,10 +35,11 @@ CKEDITOR.editorConfig = function( config ) {
 
 	// Simplify the dialog windows.
 	//config.removeDialogTabs = 'image:advanced;link:advanced';
-       // config.extraPlugins = 'imageuploader';
-		config.extraPlugins = 'font';
-		config.extraPlugins = 'uploadimage';
-		config.extraPlugins = 'uploadwidget';
-		config.language = 'ru';
+	// One assignment: repeated `config.extraPlugins = ...` lines overwrote each other.
+	config.extraPlugins = 'font,uploadwidget';
+	// Easy Image / Cloud Services need a CKEditor cloud token we don't have; they
+	// only produced "cloudservices-no-token-url" console errors.
+	config.removePlugins = 'easyimage,cloudservices';
+	config.language = 'en';
 
 };

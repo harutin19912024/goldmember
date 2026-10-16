@@ -18,7 +18,11 @@ if (empty($allImages) && $mainImage) {
 
 $mainSrc = !empty($allImages) ? ($adminUrl . 'uploads/images/' . $allImages[0]->name) : null;
 
-$this->title = Html::encode($product->title) . ' | ' . Yii::t('app', 'Goldmember');
+$this->title = $product->title . ' | ' . Yii::t('app', 'Goldmember');
+$this->params['description'] = $product->short_description ?: $product->description;
+$_og = $mainSrc;
+if ($_og) { $this->params['ogImage'] = preg_match('#^https?://#', $_og) ? $_og : Yii::$app->request->hostInfo . '/' . ltrim($_og, '/'); }
+$this->params['ogType'] = 'article';
 
 $hasDiscount = !empty($product->another_price) && (float)$product->another_price > (float)$product->price;
 ?>

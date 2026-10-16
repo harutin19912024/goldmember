@@ -5,6 +5,11 @@
 > docker compose ps   # should show 3 containers: app, db, phpmyadmin
 > docker compose up -d   # start if stopped
 > ```
+>
+> **Current state (2026-10-16):** work from the audit + 4 sprints sits on stacked local branches
+> `sprint-1-security` → `sprint-2-broken-pages` → `sprint-3-data-ops` → `sprint-4-seo-i18n-perf`
+> (not merged to `main`, not pushed, **not deployed**). Full report + production deploy checklist:
+> **[`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md)**.
 
 ---
 
@@ -63,11 +68,14 @@
 ### Key Design Choices
 - **Yii2 Advanced Template** — backend and frontend are separate Yii2 apps sharing `common/`
 - **codemix/yii2-localeurls** — URL language prefixes (`/am/...`, `/en/...`); URL code `am` ≠ ICU locale `am` (Amharic), so the formatter is pinned to `en-US` in `backend/config/main.php`
+- **Timezone** — both apps set `'timeZone' => 'Asia/Yerevan'` at the top of their `main.php`. Yii calls PHP `date_default_timezone_set()` from this, so every `strtotime()`/`date()` interprets DB datetimes as Yerevan local (matches what admins type into datepickers). MariaDB session tz is still UTC; no code does server-side date math beyond PHP.
 - **Session-based cart** — using `omnilight/yii2-shopping-cart` + manual session keys
 - **VisitorTracker** — bootstrap component tracking every request in `user_activity` table
 - **Multi-model translations** — pattern `Product` + `TrProduct`, `News` + `TrNews`, etc.
   - Each translatable section has: a `Tr<Name>Controller` with AJAX `actionUpdate` that returns the form partial; a `tr-<name>/_form.php` partial; and a JS function `edit<Name>Tr(lang, id, isDefault)` in `backend/web/js/product_view.js` that fetches the partial and injects it into `#tr_<name>`
 - **Per-metal API fetch** — `MetalPricesController::actionFetchLatest` and `updateExchange.php` both pull all 4 metals (XAU, XAG, XPT, XPD) in one API call and write one `metal_price_real` row per metal_id
+- **Locale-URL POST gotcha** — `codemix/yii2-localeurls` 302-redirects `/agora/x` → `/<lang>/agora/x`. Browsers drop POST bodies on 302. Backend + frontend now inject `window.AGORA_URLS` / `window.AGORA_ADMIN_URLS` from PHP with the language already in the path so fetch hits the right URL on the first try.
+- **JS cache-busting** — `registerJsFile()` on bare paths does NOT respect `appendTimestamp` (only asset-bundle pipeline does). For directly-registered JS files (`/js/agora.js`, `/js/agora-admin.js`), the view manually appends `?v=<filemtime>`.
 
 ---
 
@@ -79,6 +87,13 @@
 | Backend    | http://localhost:8090    | Admin panel                   |
 | phpMyAdmin | http://localhost:8081    | root / `rootpassword`         |
 | MariaDB    | localhost:3306           | host-side direct access       |
+| Frontend   | http://goldmember.local  | host Apache reverse-proxy → :8080 |
+| Backend    | http://admin.goldmember.local | host Apache reverse-proxy → :8090 |
+
+The `*.goldmember.local` names need a one-time host setup (adds `/etc/hosts` entries + enables the proxy vhost in the host's Apache, which already owns port 80):
+```bash
+sudo bash docker/host-apache/setup-local-hosts.sh
+```
 
 ---
 
@@ -106,7 +121,8 @@
 | `exchange_rates` | AMD-per-X rates (USD/EUR/RUB), used to convert metal prices to non-USD currencies |
 | `user` | Admin + frontend users (role 0 = admin, 1 = broker, 20 = customer) |
 | `customer` | Extended customer profile linked to user via `user_id` |
-| `auction` | Auction entries (`lot_number` unique, auto-generated `GM-YYYY-NNN` in `Auction::beforeSave`); `start_price DECIMAL(12,2)` |
+| `auction` | Auction entries. `lot_number` unique (auto-generated `GM-YYYY-NNN`). Pricing: `start_price`, `bid_increment` (default 50), `current_price` (cached high). Closing: `winner_user_id`, `winning_bid_id`, `winning_amount`, `closed_at` |
+| `bid` | Live bid records per auction. `(auction_id, user_id, amount, created_at)` with index `(auction_id, id DESC)` |
 | `donation_info` | Donations submitted via `/power-of-pany` |
 | `donate` | Bank-account list shown on the donate page |
 | `chat_usage` | Per-user chat tracking: (user_id, ip, message, tokens_in, tokens_out, created_at). Indexed on (user_id, created_at) for the daily-quota query |
@@ -126,12 +142,16 @@ docker compose exec db mariadb -u gssamru_autoimport -pbGtVSaf2rv6hLWN gssamru_g
 ## Credentials
 
 ### Admin (backend)
+Local URLs: http://localhost:8090 or http://admin.goldmember.local (frontend: http://goldmember.local).
+
 | Field    | Value    |
 |----------|----------|
 | Username | `harut`  |
 | Password | `admin123` |
 | Role     | 0 (admin) |
 | User ID  | 18 |
+
+Second local-only admin (created 2026-10-15, local Docker DB only — not on production): `admin` / `admin`, role 0, user ID 48.
 
 ### Test customer (frontend)
 Inserted for Playwright tests; reuse for manual testing too.
@@ -152,6 +172,8 @@ Local secrets live in `/var/www/html/goldmember/.env` (gitignored). See `.env.ex
 | Variable | Used by | Notes |
 |---|---|---|
 | `CHATBOT_API_KEY` | `frontend/services/ChatBotService.php` via `params.php` → `getenv()` | OpenAI Responses API key. Empty = chat returns 503. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ENCRYPTION` | `common/components/Mailer.php` | Optional. Without `SMTP_HOST`, mail goes to `*/runtime/mail/*.eml`. |
+| `METALPRICE_API_KEY` | `updateExchange.php` | Optional override of the built-in metalpriceapi key. |
 
 After editing `.env`:
 ```bash
@@ -170,9 +192,35 @@ Apache `PassEnv` in `docker/apache/{frontend,backend}.conf` forwards the var to 
 4. Status badge on the form:
    - `upcoming` — current time < start_date
    - `live` — start_date ≤ now ≤ end_date
-   - `ended` — now > end_date
-5. Frontend customer at `/auction` sees the list; `/auction/{id}` (auth required) shows the detail page with countdown / live stream / ended message.
-6. Agora flow: backend `actionGetToken` mints publisher tokens (admin only, role=0); frontend `AgoraController::actionGetToken` mints subscriber tokens. Frontend `actionHostInfo` returns the auction creator's username so the audience UI can show "Waiting for `<host>` to start the stream…" and label them correctly once they publish.
+   - `ended` — now > end_date OR `closed_at IS NOT NULL`
+5. Frontend customer at `/auction` sees the list; `/auction/{id}` (auth required) shows the detail page with countdown / live stream / ended message + bid panel.
+
+### Agora live streaming
+- Backend `auction/get-token` mints `ROLE_PUBLISHER` tokens (admin role=0 only). Frontend `agora/get-token` ALSO issues `ROLE_PUBLISHER` tokens now — viewers join as `host` role (so they're visible in `user-joined`) but don't publish anything until they click *Share my camera*. Subscriber-role tokens are NOT used anywhere.
+- Frontend `agora/host-info?channel=auction-N` returns the auction creator's username — audience UI uses it for the "Waiting for `<host>`…" placeholder and the host's card label.
+- Frontend `agora/user-info?uids=1,2,3` + backend `auction/user-info?uids=…` return `{uid, name, initial, color}` (HSL hue = `uid * 47 mod 360`) — used to render circular initials avatars in the participants list on both sides.
+- Host's video plays ONLY in the main remote-player div (passing the `<div>` to `track.play()`, never a `<video>` element). The host's card in the participants list shows only their initials avatar plus a blinking red "Broadcasting" indicator (`markHostCardLive` / `markHostCardOffline`).
+- Non-host publishers (viewers who click *Share my camera*) get their video tile mounted inside their card's circular slot via `mountVideoInCard` / `unmountVideoInCard`.
+- Admin can broadcast `{type:'mute-all'}` / `{type:'unmute-all'}` via `client.sendStreamMessage`. Audience JS listens and mutes/unmutes own audio track only if the sender UID matches the host.
+- JS event listeners (`user-joined`, `user-published`, `stream-message`) are attached **before** `client.join()` so events from already-connected users aren't missed; an explicit post-join sweep of `client.remoteUsers` backfills any active publishers.
+
+### Bidding (Copart-style)
+- Live auction page (`frontend/views/product/auction-detail.php`) shows a bid panel with: Current Bid + Next Minimum (in the dark gold header), big yellow `Bid ֏X` quick-button auto-filled with `next_minimum`, custom-amount input + Place button, "Recent bids" feed with yellow flash on each new entry.
+- POST `/<lang>/agora/place-bid` (`AgoraController::actionPlaceBid`) — auth required, validates auction is live, host can't bid in their own auction, `amount ≥ next_minimum`. Saves bid + updates `auction.current_price`. After server save, bidder broadcasts `{type:'bid', bid, snapshot}` via Agora `sendStreamMessage`. 15-second polling on both viewer and admin sides is the safety net.
+- GET `/<lang>/agora/bids?auction_id=N` and `/<lang>/auction/bids?auction_id=N` (admin) return the same snapshot shape via `Bid::snapshot()`.
+- `common/models/Bid.php` — single source of truth. `snapshot()` computes `current_price` from `MAX(bid.amount)`, treats auction as closed if `closed_at IS NOT NULL` OR `end_date <= now`, falls back to highest bid as `winner` when the new auction columns aren't populated. `safeAttr()` helper returns a default for missing columns so the feature works pre-ALTER too.
+
+### Finishing the auction
+- Admin's auction form shows the bid panel for **every** status (live/upcoming/ended). When ended, the streaming UI is replaced with a small "live streaming no longer available" note, and the bid panel becomes read-only history.
+- Live state has two close paths:
+  - **Finish Auction (Sell to highest)** — big red button below the bid feed → POST `/auction/close-auction` with no `bid_id` → server picks highest.
+  - **✓ Sell** — per-bid green button → POST `/auction/close-auction` with `bid_id=N` → server uses that specific bid as winner.
+- `AuctionController::actionCloseAuction` (admin role=0 only): sets `closed_at`, `winner_user_id`, `winning_bid_id`, `winning_amount`, `current_price`, and pulls `end_date` to NOW so public status flips to ended. Idempotent (409 on double-close). Returns snapshot with winner spliced in from the `$bid` row directly, so the broadcast carries a winner even if the persistence columns are missing.
+- After close, admin broadcasts `{type:'auction-ended', snapshot}` → all clients call `renderAuctionClosed` → viewer sees the 🔨 SOLD banner + "Won by X for ֏Y" (`hammerDrop` CSS animation); admin sees the gold "Sold to X" banner.
+
+### View page (`/auction/view?id=N`)
+- Linked from the View button on `/auction/index` (action column template now `{view}{update}{delete}`).
+- Three sections: auction details (DetailView), 🔨 **Winner panel** with gold border + initials avatar + name/email/phone + big gold winning bid, and full **Bid History** table with the winning row highlighted (gold left-border, gold background, 🔨 icon, "Winner" tag).
 
 ---
 
@@ -226,6 +274,8 @@ python3 -m pytest tests/playwright/ -v --browser chromium
 | `test_frontend_auth.py` | Login, register, forgot-password pages |
 | `test_backend_auth.py` | Admin login (success + failure), auth redirect |
 | `test_backend_crud.py` | Admin CRUD pages: products, news, categories, sliders, users |
+| `test_backend_access_control.py` | Guests redirected from admin; customer accounts can't log into admin |
+| `test_smoke_all_pages.py` | Every sitemap URL + account pages (customer) and every admin section + first update/view (admin): no 5xx / PHP errors. ~5 min |
 
 Local-only tests (gitignored; written for ad-hoc validation, see `.gitignore`):
 - `test_auction_flow.py` — auction CRUD + lot auto-gen + frontend listing/detail
@@ -235,6 +285,12 @@ Local-only tests (gitignored; written for ad-hoc validation, see `.gitignore`):
 ---
 
 ## Known Bugs Fixed
+
+### Session 2026-10-15/16 (audit + 4 sprints)
+See [`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md). Highlights: admin panel was open to any
+customer account; `site/login-user` let anyone log in as any user by email; public blog delete; empty homepage
+price tables + fake "Change" column; email broken on PHP 8.2; frontend wrote no error log; Armenian UI was
+Latin transliteration. All fixed on the sprint branches.
 
 ### Earlier sessions
 - Frontend crash: `language`/`sourceLanguage` were inside `components` block in `frontend/config/main.php` — moved to top-level
@@ -260,6 +316,17 @@ Local-only tests (gitignored; written for ad-hoc validation, see `.gitignore`):
 - **Donate form** — `message` textarea had `name="message"` (not `DonateForm[message]`) so the field never reached the model; fixed via `$form->field()`. Page bottom padding added so the chat widget doesn't overlap the submit button.
 - **`Class backend\controllers\Yii not found`** — 7 controllers used `Yii::t(...)` without `use Yii;`. Patched: DonateController, ExchangeRatesController, MetalsController, PartnersController, CurrenciesController, MetalPricesController, UserActivityController.
 - **`frontend/config/news-routes.json` permission denied** — directory wasn't writable by `www-data` (uid 33). Fixed permissions on the file + parent.
+
+### Session 2026-05-24 (product detail, tz, Agora overhaul, bidding, finish auction)
+- **Product detail 404** — listing template linked to `Url::to(['/product/product', 'id' => $id])` but `ProductController::actionProduct` doesn't exist. Added URL rule `product/<id:\d+>` → `product/detail`, new `actionDetail($id)`, new `frontend/views/product/detail.php` styled like best-offer-detail but richer. `actionIndex` now redirects to detail when `?id=N` is passed. Listing + favorites templates updated to use the new route.
+- **Auction countdown off by 4h** — server in UTC, admin enters datetimes in Yerevan local; `strtotime()` interpreted DB string as UTC. Added `'timeZone' => 'Asia/Yerevan'` to both `frontend/config/main.php` and `backend/config/main.php`. Yii's `setTimeZone` also calls PHP `date_default_timezone_set()`.
+- **Audience main player black, host face in tiny avatar** — `playMainVideo` and `mountVideoInCard` were both being called for the host. Agora's `track.play()` can only render to one container at a time, so the second call moved the video out of the main player. Now the host's video plays in the main player only; their card shows a blinking "Broadcasting" indicator (`markHostCardLive` / `markHostCardOffline`). Non-host publishers (viewers sharing camera) still get the card-slot mount via `mountVideoInCard`.
+- **Audience couldn't publish** — frontend tokens were `ROLE_SUBSCRIBER`; Agora's server rejects `publish()` from subscriber tokens regardless of client-side `setClientRole`. Switched `AgoraController::actionGetToken` to `ROLE_PUBLISHER`. Viewers join as `host` role by default so they're visible to everyone via `user-joined` (in `live` mode, audience is invisible).
+- **Admin not seeing viewers in cards** — listeners attached AFTER `join()` were missing events from viewers already in the channel. Now attached BEFORE `join()`, plus an explicit `agoraClient.remoteUsers` sweep after join. Also: `registerJsFile()` on bare URLs doesn't get `appendTimestamp`; manually append `?v=<filemtime>` for `/js/agora.js` + `/js/agora-admin.js`. Confirmed via fresh-fetch HTML inspection.
+- **`/agora/place-bid` got "Auction not found"** — `codemix/yii2-localeurls` 302-redirects bare `/agora/place-bid` → `/<lang>/agora/place-bid`; browsers turn POST into GET on 302 and drop the body. Both apps now inject `window.AGORA_URLS` / `window.AGORA_ADMIN_URLS` from PHP with the language prefix already in the path.
+- **`UnknownPropertyException: Auction::current_price`** — production schema cache didn't have the new columns when code accessed them as ActiveRecord attributes. Added `Bid::safeAttr($auction, $col, $default)` everywhere we touch `bid_increment`, `current_price`, `winner_user_id`, etc. Feature works fully even before the ALTER lands.
+- **Close button disappears after closing** — old `_form.php` replaced the entire bid panel with a 1-line alert for ended auctions, so admin couldn't see history or click anything. Now `_agora_host.php` takes `$auctionStatus` and hides only the streaming portion when ended; the bid panel and winner banner stay visible. Renamed button "Close Auction" → "Finish Auction (Sell to highest)" per owner phrasing.
+- **"Auction closed — no winner" despite a sold bid** — same column-missing issue; `Bid::snapshot()` couldn't recall the winner because `winner_user_id` column was absent. Fixed in two layers: (1) snapshot now treats auction as closed if `end_date <= now` OR `closed_at IS NOT NULL`, and falls back to the highest bid as winner if columns missing. (2) `actionCloseAuction` post-processes the snapshot to splice the winner from the `$bid` row directly, so the immediate broadcast always carries a real winner.
 
 ---
 
@@ -297,44 +364,68 @@ New entries added during this session:
 
 ---
 
-## Known Remaining Issues
+## Known Remaining Issues / Plan
 
-| Issue | Location | Severity |
-|---|---|---|
-| `CartController` mixes `Service` and `Product` models | `frontend/controllers/CartController.php` | High — cart not functional for actual products |
-| `cookieValidationKey` hardcoded placeholder | `frontend/config/main.php:63` | Medium — should move to env var |
-| No payment gateway integration | — | Critical for marketplace |
-| Backend admin panel string i18n incomplete (Russian/English mix) | various backend views | Low — cosmetic |
-| Dozens of backup/dead view files (`*-old.php`, `*-backup-*`) | `backend/views/*` | Low — clutter |
-| `enableStrictParsing=false` on frontend URL manager | `frontend/config/main.php` | Low — may route unintended 404s |
-| Git remote URL embeds a GitHub PAT in `.git/config` | `.git/config` | High — anyone with shell access can extract; rotate + use credential helper |
-| `/media/*` admin pages 500 with `Files::faxbid_or_vinradar` missing | pre-existing model bug | Low — needs investigation |
+The up-to-date list (what's done, what's left, deploy checklist) is in
+[`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md). Short version of what's left:
+
+1. **Merge + push + deploy** the sprint branches (push needs a new GitHub token/SSH key — the old PAT is dead and was removed from the remote URL).
+2. **Production-only config** (gitignored, check over FTP): disable Gii/debug in `backend/config/main-local.php`, `YII_DEBUG` off in both `web/index.php`, https `adminUrl` in `common/config/params.php`, cPanel cron for `updateExchange.php`, SMTP.
+3. **Cart → checkout → payment** (Idram/ArCa) — needs owner decision + merchant account.
+4. Migrate swiftmailer → `yii2-symfonymailer` (needs composer).
+5. Native-speaker review of Armenian translations; admin UI font lacks Armenian glyphs.
+6. Data cleanup on production (junk news categories, "asdfasdf" blog row); exchange-rate buy/sell look reversed.
+7. Cleanup: `*-old*` / backup views, remaining car-parts leftovers (CartController-Old, productLayout, top_menu).
+
+### Conventions added 2026-10-16
+- **DB changes** go in `database/updates/YYYY-MM-DD-*.sql`, idempotent (see its README). No Yii console app exists.
+- **Admin access** is enforced app-wide by `backend/components/AdminAccessControl` (attached in tracked `backend/config/bootstrap.php`); don't rely on per-controller rules alone.
+- **Never probe delete/write endpoints with real ids**, even after removing them (opcache once served the old code and deleted a row).
+- `backend/config/main.php`, `*/config/main-local.php`, `common/config/params.php`, `*/web/index.php` are **gitignored and differ per server** — put cross-environment code in tracked files (`bootstrap.php`, components).
+- Changed CSS files pulled in via `@import` from `global.css` need a `?v=` bump there (cached 30 days).
 
 ---
 
-## Improvement Plan (priority order)
+## Production Deployment
 
-### P0 — Critical / Blocking
-1. **Complete cart → order flow** — handle `Product` (not just `Service`) and create actual `Order` records
-2. **Harden `cookieValidationKey`** — read from env var
-3. **Rotate the embedded GitHub PAT** in the git remote URL
+The production server is **shared FTP hosting only** — port 22 closed, port 21 open. The FTP login lands directly in the Yii project root, so remote paths mirror local exactly (`frontend/`, `backend/`, `common/`, etc.). Apache rewrites map the document root to `frontend/web/`.
 
-### P1 — High Value
-4. **Schedule `updateExchange.php`** via cron so `metal_price_real` stays fresh
-5. **Payment gateway** — integrate ARCA or IDram (Armenia) for purchases
-6. **Email notifications** — configure SwiftMailer SMTP; send order confirmations, price alerts
-7. **Admin dashboard** — replace placeholder with real KPIs (daily visits, new users, today's gold price delta)
-8. **Implement bid placement + bid history** on auctions — currently the Agora stream is just video; there's no on-platform bid recording
+| Setting | Value |
+|---|---|
+| Host | `31.22.4.234` (= `goldmember.am`) |
+| FTP user | `goldmember@goldmember.am` (cPanel-style virtual user) |
+| Password | Provided per-session by owner — not committed anywhere |
+| Tool | `lftp` (handles `put -O <remote_dir>` precisely; never `mirror -R`) |
 
-### P2 — Improvements
-9. **PHPUnit unit tests** for `CurrencyHelper`, `MetalPriceReal`, `Product::findList()`
-10. **Product search filters** — fineness/karat, price range, material type
-11. **REST API for mobile** — APNS/GCM suggests a mobile app; add `/api/v1/`
-12. **Real-time price widget** — JS polling or WebSocket for live metal prices on homepage
+**Standard "sync changed files" pattern** — list git-modified files, then run an `lftp` script with one `put -O <remote_dir> <local_path>` per file. Verify with `cls -l` and compare byte sizes to `stat -c%s` locally.
 
-### P3 — Cleanup
-13. **Remove backup view files** — delete `*-old*`, `*-backup-*`, `*-Old*`
-14. **Backend admin UI i18n** — standardize to English or finish translation
+```bash
+lftp -u "$USER","$PASS" "$HOST" <<'LFTP'
+set ssl:verify-certificate no
+set net:timeout 30
+set xfer:clobber yes
+set ftp:ssl-allow no
+put -O <remote_dir>  <local_file>
+cls -l <each_uploaded_file>
+LFTP
+```
+
+**DB changes**: no remote `mysql` CLI access — owner runs SQL through their hosting control panel's phpMyAdmin. Write SQL with `ADD COLUMN IF NOT EXISTS` so it's idempotent.
+
+**After schema changes**, clear Yii's table-schema cache (delete `runtime/cache/*` in both `frontend/` and `backend/` via FTP) or new columns won't be visible to ActiveRecord until the cache expires.
+
+**Sensitive remote files** — do NOT overwrite blindly:
+- `.env` (production secrets, including the real `CHATBOT_API_KEY`)
+- `common/config/db-local.php` (production DB credentials)
+- `frontend/web/.htaccess`, `backend/web/.htaccess`
+- The 50KB root `index.php` (legacy fallback, leave alone)
+
+**Live URLs to smoke-test after deploy:**
+- https://goldmember.am/
+- https://goldmember.am/am/auction
+- https://goldmember.am/am/auction/<id> (auth required)
+- https://goldmember.am/am/product/<id>
+- https://admin.goldmember.am/
 
 ---
 

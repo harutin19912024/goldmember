@@ -79,33 +79,51 @@ $this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END,
 ?>
 <?php $this->beginPage() ?>
 
+<?php
+// ── SEO ────────────────────────────────────────────────────────────────────
+// Pages may set $this->params['description'] and $this->params['ogImage'].
+// URL code "am" is our Armenian prefix, but the ISO 639-1 code is "hy"
+// ("am" is Amharic), so lang/hreflang use the ISO code.
+$isoLang = ['am' => 'hy', 'en' => 'en'];
+$pageTitle = $this->title !== '' && $this->title !== null ? $this->title : $settings[0]['site_title'];
+$pageDescription = $this->params['description'] ?? Yii::t('app', 'Goldmember is Armenia\'s trusted platform for gold and precious metals — buy, sell and join live auctions with confidence.');
+$pageDescription = mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags($pageDescription))), 0, 300);
+$hostInfo = Yii::$app->request->hostInfo;
+$canonicalPath = strtok($currentUrl, '?');
+$ogImage = $this->params['ogImage'] ?? ($hostInfo . '/images/home-page.jpeg');
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= $isoLang[$currentLang] ?? 'hy' ?>">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="<?=$settings[0]['meta_tag']?>">
-    <meta name="keywords" content="<?=$settings[0]['meta_description']?>">
-    <meta name="author" content="John Doe">
+    <meta name="description" content="<?= Html::encode($pageDescription) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?= Html::csrfMetaTags() ?>
-    <title><?php if($this->title == ''):?><?=$settings[0]['site_title']?><?php else:?><?=$this->title?><?php endif;?></title>
+    <title><?= Html::encode($pageTitle) ?></title>
+    <link rel="canonical" href="<?= Html::encode($hostInfo . $canonicalPath) ?>">
+    <?php foreach ($langSwitchUrls as $code => $url): ?>
+    <link rel="alternate" hreflang="<?= $isoLang[$code] ?? $code ?>" href="<?= Html::encode($hostInfo . strtok($url, '?')) ?>">
+    <?php endforeach; ?>
+    <?php if (isset($langSwitchUrls['am'])): ?>
+    <link rel="alternate" hreflang="x-default" href="<?= Html::encode($hostInfo . strtok($langSwitchUrls['am'], '?')) ?>">
+    <?php endif; ?>
+    <meta property="og:site_name" content="Goldmember">
+    <meta property="og:type" content="<?= Html::encode($this->params['ogType'] ?? 'website') ?>">
+    <meta property="og:title" content="<?= Html::encode($pageTitle) ?>">
+    <meta property="og:description" content="<?= Html::encode($pageDescription) ?>">
+    <meta property="og:url" content="<?= Html::encode($hostInfo . $canonicalPath) ?>">
+    <meta property="og:image" content="<?= Html::encode($ogImage) ?>">
+    <meta property="og:locale" content="<?= $currentLang === 'en' ? 'en_US' : 'hy_AM' ?>">
+    <meta name="twitter:card" content="summary_large_image">
     <link href="/img/favicon.ico" rel="icon">
     <link href="/img/apple-touch-icon.png" rel="apple-touch-icon">
     
     <!-- Fonts -->
-    <link rel="preload" href="/fonts/roboto/Roboto-Light.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <!-- Preload only the body font weights; the rest load on demand via @font-face (font-display: swap). -->
     <link rel="preload" href="/fonts/roboto/Roboto-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="/fonts/roboto/Roboto-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-    <link rel="preload" href="/fonts/roboto/Roboto-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-    <link rel="preload" href="/fonts/roboto/Roboto-Thin.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
-    <link rel="preload" href="/fonts/inter/Inter-Thin.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-    <link rel="preload" href="/fonts/inter/Inter-Light.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-    <link rel="preload" href="/fonts/inter/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-    <link rel="preload" href="/fonts/inter/Inter-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-    <link rel="preload" href="/fonts/inter/Inter-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-    <link rel="preload" href="/fonts/inter/Inter-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <?php $this->head() ?>
 </head>
 
@@ -322,7 +340,7 @@ $this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END,
                 <li class="me-md-4"><a href="mailto:<?=$settings[0]['site_email']?>"> <i class="bi bi-envelope-fill pe-1"></i><span><?=$settings[0]['site_email']?></span></a>
                 </li>
                 <?php foreach(explode(',', $settings[0]['site_phone']) as $phone):?>
-                <li class="me-md-4"><a href="tel:<?=$phone?>"> <i class="bi bi-telephone-fill pe-1"></i> <span><?=$phone?></span></a></li>
+                <li class="me-md-4"><a href="tel:+<?= preg_replace('/\D+/', '', $phone) ?>"> <i class="bi bi-telephone-fill pe-1"></i> <span><?= Html::encode(trim($phone)) ?></span></a></li>
                 <?php endforeach;?>
             </ul>
             <ul class="px-0 d-flex col-md-3 col-6 justify-content-end justify-content-md-start mt-0 mb-0 justify-content-md-end mb-0">
@@ -474,13 +492,13 @@ $this->registerJsFile('/js/favorites.js', ['position' => \yii\web\View::POS_END,
         <div class="marquee-wrapper">
             <div class="marquee-text">
                 <?php foreach($newses as $news): ?>
-                    <a href="<?= Yii::$app->language ?>/news/<?= $news->id ?>" target="_blank"><?= $news->title ?></a> |
+                    <a href="/<?= Yii::$app->language ?>/news/<?= $news->id ?>" target="_blank"><?= Html::encode($news->title) ?></a> |
                 <?php endforeach; ?>
             </div>
             <!-- Duplicate to ensure a seamless loop -->
             <div class="marquee-text">
                 <?php foreach($newses as $news): ?>
-                    <a href="<?= Yii::$app->language ?>/news/<?= $news->id ?>" target="_blank"><?= $news->title ?></a> |
+                    <a href="/<?= Yii::$app->language ?>/news/<?= $news->id ?>" target="_blank"><?= Html::encode($news->title) ?></a> |
                 <?php endforeach; ?>
             </div>
         </div>

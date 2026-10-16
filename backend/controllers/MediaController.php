@@ -41,13 +41,8 @@ class MediaController extends Controller
      */
     public function actionIndex()
     {
-        $searchModel = new Files();
-        $dataProvider = $searchModel->search($this->request->queryParams);
-
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
+        // There is no combined media list; the sidebar links Gallery and Videos.
+        return $this->redirect(['media/gallery']);
     }
     
     public function actionGallery() 
@@ -96,7 +91,7 @@ class MediaController extends Controller
     public function actionCreate()
     {
         $model = new Files();
-        $isGallery = $this->request->queryParams['isGallery'];
+        $isGallery = (int)($this->request->queryParams['isGallery'] ?? 1);
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $isGallery) {
@@ -130,12 +125,16 @@ class MediaController extends Controller
     {
         $model = $this->findModel($id);
 
+        $isGallery = $model->category === 'gallery' ? 1 : 0;
+
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            return $this->redirect([$isGallery ? 'media/gallery' : 'media/video']);
         }
 
         return $this->render('update', [
             'model' => $model,
+            'isGallery' => $isGallery,
+            'pageName' => $isGallery ? 'Gallery' : 'Video',
         ]);
     }
 
@@ -148,8 +147,9 @@ class MediaController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
-        $isGallery = $this->request->queryParams['isGallery'];
+        $model = $this->findModel($id);
+        $isGallery = $model->category === 'gallery';
+        $model->delete();
         if($isGallery) {
             return $this->redirect(['media/gallery']);
         } else {

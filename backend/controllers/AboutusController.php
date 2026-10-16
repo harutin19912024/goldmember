@@ -199,7 +199,6 @@ class AboutusController extends Controller {
                         $updateFile->category = 'about';
                         $updateFile->top = 1;
                         $updateFile->status = 1;
-                        $updateFile->faxbid_or_vinradar = 1;
                     $updateFile->save();
                 }
             }
