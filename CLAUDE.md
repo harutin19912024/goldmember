@@ -8,7 +8,7 @@
 >
 > **Current state (2026-10-16):** work from the audit + 5 sprints sits on stacked branches
 > `sprint-1-security` → `sprint-2-broken-pages` → `sprint-3-data-ops` → `sprint-4-seo-i18n-perf` → `sprint-5-cleanup`
-> (not merged to `main`; sprint-4 is pushed to origin; **not deployed**). Full report + production deploy checklist:
+> (merged to `main`; **code deployed to production 2026-10-16** via `scripts/deploy-ftp.sh a80851e HEAD`; SQL updates + server-only config edits still pending — see the report). Full report + production deploy checklist:
 > **[`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md)**.
 
 ---
@@ -369,7 +369,7 @@ New entries added during this session:
 The up-to-date list (what's done, what's left, deploy checklist) is in
 [`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md). Short version of what's left:
 
-1. **Merge into `main` + deploy** the sprint branches (pushing works again: `sprint-4-seo-i18n-perf` is on origin).
+1. **Finish the deploy**: run the `database/updates/2026-10-16-*.sql` files in phpMyAdmin; edit the server-only configs (YII_DEBUG still true, Gii `allowedIPs '*'`, http `adminUrl`); add the cron for `updateExchange.php`.
 2. **Production-only config** (gitignored, check over FTP): disable Gii/debug in `backend/config/main-local.php`, `YII_DEBUG` off in both `web/index.php`, https `adminUrl` in `common/config/params.php`, cPanel cron for `updateExchange.php`, SMTP.
 3. **Cart → checkout → payment** (Idram/ArCa) — needs owner decision + merchant account.
 4. Migrate swiftmailer → `yii2-symfonymailer` (needs composer).
@@ -394,7 +394,8 @@ The production server is **shared FTP hosting only** — port 22 closed, port 21
 | Host | `31.22.4.234` (= `goldmember.am`) |
 | FTP user | `goldmember@goldmember.am` (cPanel-style virtual user) |
 | Password | Provided per-session by owner — not committed anywhere |
-| Tool | `lftp` (handles `put -O <remote_dir>` precisely; never `mirror -R`) |
+| Tool | `lftp` (handles `put -O <remote_dir>` precisely; never `mirror -R`). `scripts/deploy-ftp.sh <base> [head] [--go]` wraps it. |
+| Notes | Server files have CRLF line endings: compare with `diff --strip-trailing-cr -w` before overwriting. Production gets edited directly over FTP sometimes, so always diff before upload. |
 
 **Standard "sync changed files" pattern** — list git-modified files, then run an `lftp` script with one `put -O <remote_dir> <local_path>` per file. Verify with `cls -l` and compare byte sizes to `stat -c%s` locally.
 

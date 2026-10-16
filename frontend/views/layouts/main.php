@@ -385,7 +385,7 @@ $ogImage = $this->params['ogImage'] ?? ($hostInfo . '/images/home-page.jpeg');
                 <li>
                     <a href="/<?=Yii::$app->language?>/logout" class="user-link bg-white-color d-flex">
                         <i class="bi bi-box-arrow-right"></i>
-                        <span>Logout</span>
+                        <span><?= Yii::t('app', 'Logout') ?></span>
                     </a>
                 </li>
                 <?php endif;?>
