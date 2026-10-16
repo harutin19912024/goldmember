@@ -36,7 +36,10 @@ class ExchangeRates extends \yii\db\ActiveRecord
         return [
             [['currency_id', 'sell_rate', 'buy_rate'], 'required'],
             [['currency_id'], 'integer'],
-            [['sell_rate', 'buy_rate'], 'number'],
+            [['sell_rate', 'buy_rate'], 'number', 'min' => 0],
+            // We sell currency to customers at a higher rate than we buy it from them.
+            ['sell_rate', 'compare', 'compareAttribute' => 'buy_rate', 'operator' => '>=', 'type' => 'number',
+                'message' => Yii::t('app', 'Sell rate must not be lower than the buy rate.')],
             [['created_at', 'updated_at'], 'safe'],
             [['currency_id'], 'exist', 'skipOnError' => true, 'targetClass' => Currencies::class, 'targetAttribute' => ['currency_id' => 'id']],
         ];

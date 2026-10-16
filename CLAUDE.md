@@ -6,9 +6,9 @@
 > docker compose up -d   # start if stopped
 > ```
 >
-> **Current state (2026-10-16):** work from the audit + 4 sprints sits on stacked local branches
-> `sprint-1-security` → `sprint-2-broken-pages` → `sprint-3-data-ops` → `sprint-4-seo-i18n-perf`
-> (not merged to `main`, not pushed, **not deployed**). Full report + production deploy checklist:
+> **Current state (2026-10-16):** work from the audit + 5 sprints sits on stacked branches
+> `sprint-1-security` → `sprint-2-broken-pages` → `sprint-3-data-ops` → `sprint-4-seo-i18n-perf` → `sprint-5-cleanup`
+> (not merged to `main`; sprint-4 is pushed to origin; **not deployed**). Full report + production deploy checklist:
 > **[`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md)**.
 
 ---
@@ -369,13 +369,12 @@ New entries added during this session:
 The up-to-date list (what's done, what's left, deploy checklist) is in
 [`docs/PROGRESS-2026-10-16.md`](docs/PROGRESS-2026-10-16.md). Short version of what's left:
 
-1. **Merge + push + deploy** the sprint branches (push needs a new GitHub token/SSH key — the old PAT is dead and was removed from the remote URL).
+1. **Merge into `main` + deploy** the sprint branches (pushing works again: `sprint-4-seo-i18n-perf` is on origin).
 2. **Production-only config** (gitignored, check over FTP): disable Gii/debug in `backend/config/main-local.php`, `YII_DEBUG` off in both `web/index.php`, https `adminUrl` in `common/config/params.php`, cPanel cron for `updateExchange.php`, SMTP.
 3. **Cart → checkout → payment** (Idram/ArCa) — needs owner decision + merchant account.
 4. Migrate swiftmailer → `yii2-symfonymailer` (needs composer).
-5. Native-speaker review of Armenian translations; admin UI font lacks Armenian glyphs.
-6. Data cleanup on production (junk news categories, "asdfasdf" blog row); exchange-rate buy/sell look reversed.
-7. Cleanup: `*-old*` / backup views, remaining car-parts leftovers (CartController-Old, productLayout, top_menu).
+5. Native-speaker review of Armenian translations.
+6. Data cleanup on production (junk news categories, "asdfasdf" blog row); USD exchange-rate row has buy > sell (the form now rejects that on save).
 
 ### Conventions added 2026-10-16
 - **DB changes** go in `database/updates/YYYY-MM-DD-*.sql`, idempotent (see its README). No Yii console app exists.

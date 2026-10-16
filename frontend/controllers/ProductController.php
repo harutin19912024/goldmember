@@ -158,24 +158,6 @@ class ProductController extends Controller {
     }
 	
 	
-	public function actionFilterProduct()
-	{
-		
-		$model = new Product();
-		$products = $model->search(Yii::$app->request->queryParams);
-
-		
-		$view_type = isset($_COOKIE['view_type']) ? $_COOKIE['view_type'] : 'grid';
-		return $this->render('index', [
-			  'products' => $products,
-			  'active' => 'grid',
-			  'wihtouFilter' => false,
-			  'page' => [],
-			  'view_type' => $view_type,
-		]);
-	}
-	
-	
     public function actionFilter() {
 	  if (Yii::$app->request->isAjax) {
 		$post = Yii::$app->request->post();
